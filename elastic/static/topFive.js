@@ -5,7 +5,7 @@ async function fetchTopFive() {
 
     try {
         // Pošlji zahtevek na API za agregacijo
-        const response = await fetch('http://localhost:8080/api/aggregations');
+        const response = await fetch('http://localhost:8080/api/top_five');
         const data = await response.json();
         document.getElementById("loading-text").style.display = "none";
 
@@ -39,12 +39,12 @@ function createBarChart(data) {
 
     // Nastavi lestvici za x in y os
     const xScale = d3.scaleBand()
-        .domain(data.map(d => d.rezultat))
+        .domain(data.map(d => d.key))
         .range([margin.left, width - margin.right])
         .padding(0.1);
 
     const yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.count)])
+        .domain([0, d3.max(data, d => d.doc_count)])
         .nice()
         .range([height - margin.bottom, margin.top]);
 
@@ -67,10 +67,10 @@ function createBarChart(data) {
         .enter()
         .append("rect")
         .attr("class", "bar")
-        .attr("x", d => xScale(d.rezultat))
-        .attr("y", d => yScale(d.count))
+        .attr("x", d => xScale(d.key))
+        .attr("y", d => yScale(d.doc_count))
         .attr("width", xScale.bandwidth())
-        .attr("height", d => height - margin.bottom - yScale(d.count))
+        .attr("height", d => height - margin.bottom - yScale(d.doc_count))
         .attr("fill", "#69b3a2");
 
     // Dodaj besedilo z vrednostmi na vrh stolpcev
@@ -78,9 +78,9 @@ function createBarChart(data) {
         .data(data)
         .enter()
         .append("text")
-        .attr("x", d => xScale(d.rezultat) + xScale.bandwidth() / 2)
-        .attr("y", d => yScale(d.count) - 5)
+        .attr("x", d => xScale(d.key) + xScale.bandwidth() / 2)
+        .attr("y", d => yScale(d.doc_count) - 5)
         .attr("text-anchor", "middle")
         .attr("fill", "#333")
-        .text(d => d.count);
+        .text(d => d.doc_count);
 }

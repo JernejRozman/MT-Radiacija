@@ -1,11 +1,8 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import elasticsearch
 import urllib3
-import csv
-from collections import defaultdict
-
-import os
+from flask import render_template
 
 # Onemogočimo opozorila za SSL certifikat
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -24,15 +21,46 @@ es = elasticsearch.Elasticsearch(
 app = Flask(__name__)
 CORS(app)
 
-# Osnovna pot za zagon aplikacije
 @app.route('/')
 def index():
     message =  'Hello, World!'
     return render_template('index.html', message=message)
 
-# Pot za pridobivanje agregiranih podatkov iz Elasticsearch
-@app.route('/api/aggregations', methods=['GET'])
-def get_aggregated_data():
+@app.route('/api/top_five', methods=['GET'])
+def get_top_five_data():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
+    """
+    try:
+        # Pošljemo agregacijsko poizvedbo na Elasticsearch
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,  # Ne vračamo posameznih dokumentov, samo agregacije
+            "aggs": {
+                "top_five_results": {
+                    "terms": {
+                        "field": "REZULTAT_MERITVE",
+                        "order": { "_key": "desc" },
+                        "size": 5
+                    }
+                }, 
+        }
+
+        })
+
+        # Pridobimo rezultate iz odgovora
+        top_five = response['aggregations']['top_five_results']['buckets']
+
+        result = {
+            "top_five": top_five
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/total_count', methods=['GET']) # DELA
+def get_total_count():
     """
     Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
     """
@@ -46,25 +74,95 @@ def get_aggregated_data():
                         "field": "REZULTAT_MERITVE"
                     }
                 },
+  
+            },  
+        }
+    )
+
+        # Pridobimo rezultate iz odgovora
+        total_count = response['aggregations']['total_count']['value']
+
+
+        result = {
+            "total_count": total_count,
+
+        }
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/top_depts', methods=['GET'])
+def get_top_depts_data():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
+    """
+    try:
+        # Pošljemo agregacijsko poizvedbo na Elasticsearch
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,  # Ne vračamo posameznih dokumentov, samo agregacije
+            "aggs": {
+                # SUM: REZULTAT_MERITVE MERITVE BY DELOVNO_MESTO
+                "sum_by_depts": {
+                    "terms": {
+                    "field": "DELOVNO_MESTO",  # Group by department
+                    "size": 10000,
+                    "order": {
+                        "total_radiation": "desc"        # // Order by total_radiation descending
+                        }                                         # Maximum number of departments to return
+                    },
+                    "aggs": {
+                    "total_radiation": {
+                        "sum": {
+                            "field": "REZULTAT_MERITVE"   # // Sum the radiation measurement
+                        }
+                    }
+                }
+            }       
+        }
+
+        })
+
+        radiation_by_dept = response['aggregations']['sum_by_depts']['buckets']
+
+
+
+        result = {
+            "sum_by_depts": radiation_by_dept
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/aggregations', methods=['GET'])
+def get_aggregated_data():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
+    """
+    try:
+        # Pošljemo agregacijsko poizvedbo na Elasticsearch
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,  # Ne vračamo posameznih dokumentov, samo agregacije
+            "aggs": {
+
                 "top_five_results": {
                     "terms": {
                         "field": "REZULTAT_MERITVE",
                         "order": { "_key": "desc" },
                         "size": 5
                     }
-                },
-                "average_radiation": {
-                    "avg": {
-                        "field": "REZULTAT_MERITVE"
-                    }
-                }
-            }
+                },    
+        }
+
         })
 
         # Pridobimo rezultate iz odgovora
         total_count = response['aggregations']['total_count']['value']
         top_five = response['aggregations']['top_five_results']['buckets']
         average_radiation = response['aggregations']['average_radiation']['value']
+        radiation_by_dept = response['aggregations']['sum_by_depts']['buckets']
 
         # Pripravimo podatke za odgovor
         top_five_data = [
@@ -75,10 +173,13 @@ def get_aggregated_data():
             for bucket in top_five
         ]
 
+
+
         result = {
             "total_count": total_count,
             "top_five": top_five_data,
-            "average_radiation": average_radiation
+            "average_radiation": average_radiation,
+            "sum_by_depts": radiation_by_dept
         }
 
         return jsonify(result)
@@ -86,76 +187,5 @@ def get_aggregated_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# LEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEONLEON
-
-# Pot za pridobivanje povprečnih meritev za vsako delovno mesto
-@app.route('/api/average_workplace', methods=['GET'])
-def get_average_workplace():
-    try:
-        # Dodaš nekaj printov za diagnosticiranje
-        print("Začel sem izvajati GET /api/average_workplace")
-        
-        csv_file = 'elastic/data/podatki.csv'  # Preveri, da pot do CSV-ja ustreza
-        print(f"Datoteka: {csv_file}")
-
-        averages = calculate_average_for_workplaces(csv_file)
-
-        return jsonify({'averages': averages})
-
-    except Exception as e:
-        print(f"Napaka: {str(e)}")
-        current_path = os.getcwd()
-        print("Current path:", current_path)
-        return jsonify({"error": str(e)}), 500
-
-
-    
-# Funkcija za obdelavo CSV in izračun povprečij
-import csv
-from collections import defaultdict
-
-def calculate_average_for_workplaces(csv_file):
-    # Uporabimo defaultdict, da enostavno zbiramo rezultate za vsako delovno mesto
-    workplace_data = defaultdict(list)
-    
-    # Preberi CSV datoteko
-    with open(csv_file, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=';')
-        for row in reader:
-            
-            measurement_type = row['TIP']
-            if measurement_type == "ER":
-                continue
-            # Izločimo relevantne podatke
-            workplace = row['DELOVNO_MESTO']
-            workplace = workplace.replace("?", "C")
-            workplace = workplace.replace("\ufffd", "Z")
-            workplace = workplace.replace("\u017e", "S")
-            
-            
-            
-            # Pretvorimo rezultat v float, pri čemer zamenjamo ',' s '.'
-            result_str = row['REZULTAT_MERITVE'].replace(',', '.')
-            
-            try:
-                result = float(result_str)
-            except ValueError:
-                print(f"Napaka pri pretvorbi {result_str} v float.")
-                continue  # Preskoči to vrstico, če se pretvorba ne uspe
-
-            # Zbiramo rezultate za vsako delovno mesto
-            if result != 0:
-                workplace_data[workplace].append(round(result, 6)) 
-
-    # Izračunaj povprečja za vsako delovno mesto
-    averages = {}
-    for workplace, results in workplace_data.items():
-        averages[workplace] = round(sum(results) / len(results), 4)
-
-    return averages
-
-
-# Zaženi aplikacijo na portu 8080
 if __name__ == '__main__':
     app.run(port=8080, debug=True)

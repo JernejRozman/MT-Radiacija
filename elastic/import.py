@@ -112,7 +112,6 @@ def correct_job_titles_fuzzy(entry, correction_dict):
         entry["DELOVNO_MESTO"] = corrected_title
 
     return entry
-
 def apply_corrections_fuzzy(data, correction_dict):
     for entry in data:
         correct_job_titles_fuzzy(entry, correction_dict)
@@ -133,43 +132,55 @@ def bulk_insert(data, index, batch_size=5000):
 from datetime import datetime
 
 def clean_data(data, mapping, correction_dict):
+    cleaned_data = []
     for entry in data:
+        skip_entry = False
         for field, value in entry.items():
             if value is None:
                 continue
             
-            # Če je polje "DELOVNO_MESTO", najprej preveri natančno ujemanje
+            # Skip if measurement result is 0
+            if field == "REZULTAT_MERITVE":
+                try:
+                    # Replace comma with a dot for numeric conversion
+                    numeric_value = float(value.replace(",", "."))
+                    if numeric_value == 0:
+                        skip_entry = True
+                        break
+                except ValueError:
+                    print(f"Could not convert {field} value: {value}")
+                    continue
+            
+            # Exact and fuzzy matching for job titles
             if field == "DELOVNO_MESTO":
-                # Preveri, če je vrednost v slovarju popravkov
                 if value in correction_dict:
-                    corrected_value = correction_dict[value]
-                    #print(f"Popravljam: '{value}' -> '{corrected_value}' (Exact Match)")
-                    entry[field] = corrected_value
+                    entry[field] = correction_dict[value]
                 else:
-                    # Uporabi fuzzy matching, če natančnega ujemanja ni
                     closest_match = difflib.get_close_matches(value, correction_dict.keys(), n=1, cutoff=0.8)
                     if closest_match:
-                        corrected_value = correction_dict[closest_match[0]]
-                        #print(f"Popravljam: '{value}' -> '{corrected_value}' (Fuzzy Match)")
-                        entry[field] = corrected_value
+                        entry[field] = correction_dict[closest_match[0]]
 
+            # Cleaning numeric fields
             field_type = mapping.get(field, {}).get("type")
-
-            # Čiščenje številskih polj
             if field_type in ("float", "integer"):
                 try:
                     entry[field] = float(value.replace(",", ".")) if field_type == "float" else int(value.replace(",", ""))
-                except ValueError as e:
-                    print(f"Napaka pri pretvorbi {field}: {value}")
-            
-            # Čiščenje datumskih polj
+                except ValueError:
+                    print(f"Error converting {field}: {value}")
+
+            # Cleaning date fields
             elif field_type == "date":
                 try:
                     entry[field] = datetime.strptime(value, "%d.%m.%Y")
-                except ValueError as e:
-                    print(f"Napaka pri parsiranju datuma za {field}: {value}")
-                    
-    return data
+                except ValueError:
+                    print(f"Error parsing date for {field}: {value}")
+        
+        if not skip_entry:
+            cleaned_data.append(entry)
+
+    return cleaned_data
+
+
 
 
 

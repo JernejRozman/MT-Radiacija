@@ -5,7 +5,7 @@ async function fetchData() {
 
     try {
         // Pošlji zahtevek na API za agregacijo
-        const response = await fetch('http://localhost:8080/api/aggregations');
+        const response = await fetch('http://localhost:8080/api/total_count');
         const data = await response.json();
         document.getElementById("loading-text").style.display = "none";
 
