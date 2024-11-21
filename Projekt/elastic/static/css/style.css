@@ -1,0 +1,79 @@
+/* Osnovni slog za celotno stran */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+}
+
+/* Glavna postavitev s Flexbox */
+.main-container {
+    display: flex;
+    width: 90%;
+    max-width: 1000px;
+    height: 100%;
+}
+
+/* Stranski meni z gumbi */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Gumbi v stranskem meniju */
+.sidebar button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    color: #333;
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.sidebar button:hover {
+    background-color: #ccc;
+}
+
+/* Glavna vsebina */
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-left: 20px;
+}
+
+/* Slog za naslov in besedilo */
+h1 {
+    color: #333;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.loading {
+    font-size: 1.2rem;
+    color: #888;
+    margin-top: 20px;
+}
+
+/* Slog za SVG platno */
+svg {
+    margin-top: 20px;
+}
