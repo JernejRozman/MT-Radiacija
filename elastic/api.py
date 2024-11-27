@@ -280,6 +280,31 @@ def get_exposure_by_person():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/unique_workplaces', methods=['GET'])
+def get_unique_workplaces():
+    """
+    Funkcija izvaja poizvedbo na Elasticsearch, da pridobi unikatna delovna mesta.
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "unique_workplaces": {
+                    "terms": {
+                        "field": "DELOVNO_MESTO",
+                        "size": 1000  # Omejite na željeno število delovnih mest
+                    }
+                }
+            }
+        })
+
+        # Pridobimo unikatna delovna mesta
+        unique_workplaces = [bucket['key'] for bucket in response['aggregations']['unique_workplaces']['buckets']]
+
+        return jsonify(unique_workplaces)  # Pošljemo seznam delovnih mest
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 

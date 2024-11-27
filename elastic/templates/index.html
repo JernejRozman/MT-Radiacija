@@ -20,7 +20,17 @@
                 <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
             </div>
 
-            <button id="button3" onclick="fetchExposure()">PRIKAZ 3 - Izpostavljenost vsake osebe</button>
+            <div>
+                <label for="workplaceFilter">Filter za delovno mesto:</label>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
+                </select>
+                <button id="button3" onclick="fetchExposure()">Izpostavljenost vsake osebe</button>
+            </div>
+            
+            
+            
+            
+
             <button id="button4" >PRIKAZ 4</button>
             <button id="button5" >PRIKAZ 5</button>
             <button id="button6" >PRIKAZ 6</button>
@@ -39,6 +49,8 @@
     <script type="text/javascript" src="/static/topDepartments.js"></script>
     <!-- <script type="text/javascript" src="/static/distribution.js"></script> -->
     <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
+    <script src="/static/uniqueWorkplaces.js"></script>
+
 
 
 </body>

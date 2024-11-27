@@ -6,6 +6,7 @@ async function fetchExposure() {
         // Pošlji zahtevek na API za povprečne meritve
         const response = await fetch('http://localhost:8080/api/exposure_by_person');
         const data = await response.json();
+
         document.getElementById("loading-text").style.display = "none";
         
         // Preveri, ali je prišlo do napake
@@ -13,9 +14,9 @@ async function fetchExposure() {
             throw new Error(data.error);
         }
 
+
         // Nariši scatter plot z D3.js
-        createScatterPlot(data); // Omeji na prve 3 osebe
-        console.log(data);
+        createScatterPlot(data); 
         
     } catch (error) {
         document.getElementById("loading-text").innerText = "Napaka pri pridobivanju podatkov";
@@ -23,14 +24,33 @@ async function fetchExposure() {
     }
 }
 
+
+
+
+
+// Funkcija za posodobitev vizualizacije
+function updateVisualization(data, selectedWorkplace) {
+    const dropdownButton = document.querySelector(".dropdown-button");
+    dropdownButton.textContent = selectedWorkplace || "All Workplaces";
+
+    svg.selectAll("circle")
+        .style("opacity", d => {
+            return !selectedWorkplace || d.workplace === selectedWorkplace ? 0.8 : 0.2;
+        });
+}
+
+
+
+
 function createScatterPlot(data) {
+
     // Dimenzije grafa
     const margin = { top: 10, right: 30, bottom: 50, left: 60 };
     const width = 800 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
     // Počisti prejšnji graf (če obstaja)
-    d3.select("#my_dataviz").select("svg").remove();
+    d3.select("#visualization").select("svg").remove();
 
     // Pripravi SVG prostor
     const svg = d3.select("#visualization")
@@ -56,13 +76,13 @@ function createScatterPlot(data) {
     // Dodaj osi
     svg.append("g")
         .attr("transform", `translate(0,${height})`)
-        .call(d3.axisBottom(x).ticks(data.length))
+        .call(d3.axisBottom(x).ticks(0))
         .append("text")
         .attr("x", width / 2)
         .attr("y", margin.bottom - 10)
         .attr("fill", "black")
         .style("text-anchor", "middle")
-        .text("Številka osebe");
+        .text("Osebe");
 
     svg.append("g")
         .call(d3.axisLeft(y))
@@ -85,32 +105,38 @@ function createScatterPlot(data) {
         .style("border-radius", "5px")
         .style("box-shadow", "0 2px 10px rgba(0, 0, 0, 0.1)");
 
-    // Definiraj funkcijo za interpolacijo barve od rdeče do modre
-    const colorScale = d3.scaleLinear()
-    .domain([0, d3.max(data, d => d.measurements_count) / 15, d3.max(data, d => d.measurements_count) / 5]) // Določimo točke prehoda
-    .range(["red", "yellow", "green"]); // Barve: rdeča, rumena, modra
+ 
 
-    svg.append("g")
-        .selectAll("circle")
+        svg.append("g")
+        .selectAll("path")
         .data(data)
         .enter()
-        .append("circle")
-        .attr("cx", (d, i) => x(i + 1)) // Številka osebe
-        .attr("cy", d => y(d.average_exposure)) // Povprečna izpostavljenost
-        .attr("r", 5)
-        .style("fill", d => {
-            // Preveri, ali je type "R", če ni, nastavi barvo na črno
-            if (d.type !== "R") {
-                return "black";  // Če ni tip "R", nastavi barvo na črno
+        .append("path")
+        .attr("d", function(d) {
+            // Spremenimo obliko na podlagi vrednosti atributa
+            if (d.workplace === "DELOVANJE REAKTORJA") {
+                return d3.symbol().type(d3.symbolCross).size(100)(); // Križ za "DELOVANJE REAKTORJA"
+            } else if (d.workplace === "TURIZEM") {
+                return d3.symbol().type(d3.symbolSquare).size(100)(); // Kvadrat za "TURIZEM"
             } else {
-                return colorScale(d.measurements_count); // Uporabi barvno lestvico glede na število meritev
+                return d3.symbol().type(d3.symbolCircle).size(100)(); // Krog za ostale
             }
         })
-        .style("opacity", 0.8)
+        .attr("transform", function(d, i) {
+            return `translate(${x(i + 1)}, ${y(d.average_exposure)})`; // Postavite oblike na ustrezne pozicije
+        })
+        .style("fill", d => {
+            const maximum = d3.max(data, d => d.measurements_count);
+            const colorScale = d3.scaleLinear()
+                .domain([0, maximum / 15, maximum / 5, maximum]) // Nastavi prehode
+                .range(["red", "yellow", "green", "green"]);
+            return colorScale(d.measurements_count); // Uporabi barvno lestvico glede na število meritev
+        })
+        .style("opacity", 0.1) // Nastavite začetno neprosojnost za vse
         .on("mouseover", function(event, d) {
             // Ob premiku miške prikaz showCircleData
             showCircleData.transition().duration(200).style("visibility", "visible");
-
+    
             showCircleData.html(`
                 <strong>Koda osebe: </strong>${d.person}<br>
                 <strong>Povprečna izpostavljenost: </strong>${d.average_exposure}<br>
@@ -120,35 +146,31 @@ function createScatterPlot(data) {
             `);
         })
         .on("mousemove", function(event) {
-            // Pridobi širino in višino okna brskalnika
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
-            // Pridobi trenutne koordinate miške
             const mouseX = event.pageX;
             const mouseY = event.pageY;
-            // Nastavi širino in višino showCircleData elementa
+    
             const showCircleDataWidth = showCircleData.node().offsetWidth;
             const showCircleDataHeight = showCircleData.node().offsetHeight;
         
-            // Računaj pozicijo za prikaz proti sredini zaslona
-            let showCircleDataX = mouseX + 10; // Dodajanje nekoliko prostora
-            let showCircleDataY = mouseY + 10; // Dodajanje nekoliko prostora
+            let showCircleDataX = mouseX + 10; // Dodajte nekoliko prostora
+            let showCircleDataY = mouseY + 10;
         
-            // Preveri, če je showCircleData blizu desnega roba in ga premakni na levo
+            // Preverite robove in premaknite div za prikaz
             if (showCircleDataX + showCircleDataWidth > windowWidth) {
-                showCircleDataX = windowWidth - showCircleDataWidth - 10; // Premakni ga 10px od roba
+                showCircleDataX = windowWidth - showCircleDataWidth - 10;
             }
-            // Preveri, če je showCircleData blizu spodnjega roba in ga premakni gor
             if (showCircleDataY + showCircleDataHeight > windowHeight) {
-                showCircleDataY = windowHeight - showCircleDataHeight - 10; // Premakni ga 10px od roba
+                showCircleDataY = windowHeight - showCircleDataHeight - 10;
             }
-            // Premakni showCircleData na novo pozicijo
+    
             showCircleData.style("top", showCircleDataY + "px")
                 .style("left", showCircleDataX + "px");
         })
-        
         .on("mouseout", function() {
             // Ob odstranitvi miške skrij showCircleData
             showCircleData.transition().duration(200).style("visibility", "hidden");
         });
+    
 }
