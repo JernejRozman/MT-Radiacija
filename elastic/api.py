@@ -135,7 +135,7 @@ def get_top_depts_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+    
 @app.route('/api/aggregations', methods=['GET'])
 def get_aggregated_data():
     """
@@ -186,6 +186,93 @@ def get_aggregated_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+# LEON          LEON        LEON        LEON         LEON        LEON       LEON        LEON        LEON        LEON
+@app.route('/api/exposure_by_person', methods=['GET'])
+def get_exposure_by_person():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch za pridobitev
+    skupne izpostavljenosti radiaciji za vsako osebo.
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "by_person": {
+                    "terms": {
+                        "field": "OSEBA",
+                        "size": 10000 
+                    },
+                    "aggs": {
+                        "total_exposure": {
+                            "sum": {
+                                "field": "REZULTAT_MERITVE"
+                            }
+                        },
+                        "doc_count": {
+                            "value_count": {
+                                "field": "REZULTAT_MERITVE"
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        buckets = response['aggregations']['by_person']['buckets']
+        
+        # Ustvarimo dictionary za združevanje podatkov
+        results_dict = {}
+        for bucket in buckets:
+            person_id = bucket['key']
+            total_exposure = bucket['total_exposure']['value']
+            doc_count = bucket['doc_count']['value']
+
+            # Izračun povprečne izpostavljenosti
+            average_exposure = total_exposure / doc_count if doc_count > 0 else 0
+
+            # Zapišemo v slovar
+            results_dict[person_id] = {
+                "total_exposure": total_exposure,
+                "average_exposure": average_exposure,
+                "measurements_count": doc_count
+            }
+
+        # Pretvorimo slovar v seznam za JSON odgovor
+        results = [
+            {
+                "person": person,
+                **data  # Dodamo vse vrednosti iz notranjega slovarja
+            }
+            for person, data in results_dict.items()
+        ]
+
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)
