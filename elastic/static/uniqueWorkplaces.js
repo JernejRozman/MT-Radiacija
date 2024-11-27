@@ -32,8 +32,11 @@ async function fetchUniqueWorkplaces() {
     }
 }
 
+let selectedWorkplaceExposure = "";
+
 // Funkcija za posodobitev trenutne izbire v dropdownu
 document.getElementById("workplaceFilter").addEventListener('change', function() {
     selectedWorkplaceExposure = this.value;  // Shranimo izbrano vrednost
-    //console.log("Trenutno izbrano delovno mesto:", selectedWorkplaceExposure);
+    console.log("Trenutno izbrano delovno mesto:", selectedWorkplaceExposure);
+    fetchExposure()
 });

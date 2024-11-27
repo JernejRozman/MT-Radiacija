@@ -132,7 +132,14 @@ function createScatterPlot(data) {
                 .range(["red", "yellow", "green", "green"]);
             return colorScale(d.measurements_count); // Uporabi barvno lestvico glede na število meritev
         })
-        .style("opacity", 0.1) // Nastavite začetno neprosojnost za vse
+        .style("opacity", function(d) {
+            // Preveri, če je izbrano delovno mesto
+            if (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure) {
+                return 1;  // Če je izbrano delovno mesto, opacity 0.8
+            } else {
+                return 0.05;  // Če ni izbrano delovno mesto, opacity 0.1
+            }
+        })
         .on("mouseover", function(event, d) {
             // Ob premiku miške prikaz showCircleData
             showCircleData.transition().duration(200).style("visibility", "visible");
