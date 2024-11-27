@@ -197,11 +197,20 @@ def get_exposure_by_person():
     try:
         response = es.search(index="mt-sevanje", body={
             "size": 0,
+            "query": {
+                "bool": {
+                    "must_not": {
+                        "term": {
+                            "TIP": "ER"
+                        }
+                    }
+                }
+            },
             "aggs": {
                 "by_person": {
                     "terms": {
                         "field": "OSEBA",
-                        "size": 10000 
+                        "size": 10000
                     },
                     "aggs": {
                         "total_exposure": {
@@ -213,12 +222,25 @@ def get_exposure_by_person():
                             "value_count": {
                                 "field": "REZULTAT_MERITVE"
                             }
+                        },
+                        "workplace": {
+                            "terms": {
+                                "field": "DELOVNO_MESTO",
+                                "size": 1
+                            }
+                        },
+                        "type": {
+                            "terms": {
+                                "field": "TIP",
+                                "size": 1
+                            }
                         }
                     }
                 }
             }
         })
 
+        # Accessing the 'buckets' which contains the data for each person
         buckets = response['aggregations']['by_person']['buckets']
         
         # Ustvarimo dictionary za združevanje podatkov
@@ -227,6 +249,10 @@ def get_exposure_by_person():
             person_id = bucket['key']
             total_exposure = bucket['total_exposure']['value']
             doc_count = bucket['doc_count']['value']
+            
+            # Safely extract workplace and type (these might be missing)
+            workplace = bucket.get('workplace', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
+            type = bucket.get('type', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
 
             # Izračun povprečne izpostavljenosti
             average_exposure = total_exposure / doc_count if doc_count > 0 else 0
@@ -235,7 +261,9 @@ def get_exposure_by_person():
             results_dict[person_id] = {
                 "total_exposure": total_exposure,
                 "average_exposure": average_exposure,
-                "measurements_count": doc_count
+                "measurements_count": doc_count,
+                "workplace": workplace,
+                "type": type
             }
 
         # Pretvorimo slovar v seznam za JSON odgovor
@@ -250,6 +278,7 @@ def get_exposure_by_person():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
