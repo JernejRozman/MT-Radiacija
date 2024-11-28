@@ -8,50 +8,44 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <div class="main-container">
-        <!-- Stranski meni z gumbi -->
-        <div class="sidebar">
-            <button id="button0" onclick="fetchData()">PRIKAZ 0 - Krog</button>
-            <button id="button1" onclick="fetchTopFive()">PRIKAZ 1 - Top 5 Meritve</button>
-            
-            <div id="top-departments-control">
-                <label for="top-n">Top N Oddelkov:</label>
-                <input id="top-n" type="number" min="1" value="5" />
-                <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
-            </div>
-
-            <div>
-                <label for="workplaceFilter">Filter za delovno mesto:</label>
-                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
-                </select>
-                <button id="button3" onclick="fetchExposure()">Izpostavljenost vsake osebe</button>
-            </div>
-            
-            
-            
-            
-
-            <button id="button4" >PRIKAZ 4</button>
-            <button id="button5" >PRIKAZ 5</button>
-            <button id="button6" >PRIKAZ 6</button>
+    <!-- Navbar -->
+    <div class="navbar">
+        <h2>Statistika</h2>
+        <div id="top-departments-control">
+            <label for="top-n">Vsota sevanja - oddelki:</label>
+            <input id="top-n" type="number" min="1" value="5" />
+            <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
         </div>
-
-        <!-- Glavna vsebina z vizualizacijo -->
-        <div class="content">
-            <h1>Sevanje - Statistika</h1>
-            <p id="loading-text" class="loading">Izberite vizualizacijo</p>
-            <svg id="visualization" width="800" height="600"></svg>
+        <!-- Gumb za bubble chart -->
+        <button id="bubble-chart-button" onclick="fetchAndRenderBubbleChart()">Povprečno oddelki bubble</button>
+        
+        <!-- SELEKCIJA DEPARTMENTA -->
+        <div id="department-selection">
+            <label for="department-input">Izberi delovno mesto:</label>
+            <input id="department-input" type="text" placeholder="Vpiši ali izberi..." oninput="filterDepartments()" />
+            <select id="department-dropdown" size="5" onchange="selectDepartment()">
+                <!-- Seznam bo dinamično napolnjen -->
+            </select>
+            <button id="show-data-button" onclick="fetchAndRenderDepartmentChart()">Prikaži graf</button>
         </div>
     </div>
 
+    <!-- Main Content -->
+    <div class="main-container">
+        <div class="content">
+            <h1>Sevanje - Statistika</h1>
+            <p id="loading-text" class="loading">Izberite vizualizacijo</p>
+            <svg id="visualization" width="1000" height="500"></svg>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
     <script type="text/javascript" src="/static/test.js"></script>
     <script type="text/javascript" src="/static/topFive.js"></script>
     <script type="text/javascript" src="/static/topDepartments.js"></script>
-    <!-- <script type="text/javascript" src="/static/distribution.js"></script> -->
-    <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
-    <script src="/static/uniqueWorkplaces.js"></script>
-
-
-
+    <script type="text/javascript" src="/static/distribution.js"></script>
+    <script type="text/javascript" src="/static/avg_dept_bubble.js"></script>
+    <script type="text/javascript" src="/static/selectDepartment.js"></script>
+    <script type="text/javascript" src="/static/dept_over_time.js"></script>
 </body>
 </html>

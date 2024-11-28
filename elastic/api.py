@@ -59,7 +59,7 @@ def get_top_five_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/api/total_count', methods=['GET']) # DELA
+@app.route('/api/total_count', methods=['GET']) 
 def get_total_count():
     """
     Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
@@ -91,7 +91,9 @@ def get_total_count():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 
+# TOP N ODDELKOV AKUMULIRANO <- KIND OF STUPID
 @app.route('/api/top_depts', methods=['GET'])
 def get_top_depts_data():
     """
@@ -135,7 +137,153 @@ def get_top_depts_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+# ZA ODDELKE POVPREČEJE <= BUBBLE VIZUALIZACIJA 
+@app.route('/api/avg_dept_bubble', methods=['GET'])
+def get_avg_dept_bubble():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
+    """
+    try:
+        # Pošljemo agregacijsko poizvedbo na Elasticsearch
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,  # Ne vračamo posameznih dokumentov, samo agregacije
+            "aggs": {
+                "sum_by_depts": {
+                    "terms": {
+                        "field": "DELOVNO_MESTO",  # Group by department
+                        "size": 10000,  # Maximum number of departments to return
+                        "order": {
+                            "total_radiation": "desc"  # Order by total_radiation descending
+                        }
+                    },
+                    "aggs": {
+                        "total_radiation": {
+                            "sum": {
+                                "field": "REZULTAT_MERITVE"  # Sum the radiation measurement
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        # Obdelava rezultatov
+        radiation_by_dept = [
+            {
+                "department": bucket["key"],
+                "total_radiation": bucket["total_radiation"]["value"],
+                "doc_count": bucket["doc_count"]
+            }
+            for bucket in response['aggregations']['sum_by_depts']['buckets']
+        ]
+
+        result = {
+            "sum_by_depts": radiation_by_dept
+        }
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ČRTNI DIAGRAM S PREMEMBE POVPREČNE RADIACIJE 
+@app.route('/api/radiation_changes', methods=['GET'])
+def get_radiation_changes():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača sekvenčne povprečne spremembe za vsako delovno mesto.
+    """
+    try:
+        # Pridobimo seznam vseh unikatnih delovnih mest
+        depts_response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "unique_depts": {
+                    "terms": {
+                        "field": "DELOVNO_MESTO",  # Poskrbimo za 'keyword' polje
+                        "size": 10000
+                    }
+                }
+            }
+        })
+
+        # Pripravimo seznam unikatnih delovnih mest
+        unique_depts = [
+            bucket["key"]
+            for bucket in depts_response["aggregations"]["unique_depts"]["buckets"]
+        ]
+
+        # Agregacija po sekvenčnih povprečjih za vsako delovno mesto
+        results = {}
+        for dept in unique_depts:
+            response = es.search(index="mt-sevanje", body={
+                "query": {
+                    "term": {
+                        "DELOVNO_MESTO": dept  # Uporabimo 'term' za natančno ujemanje
+                    }
+                },
+                "size": 0,
+                "aggs": {
+                    "by_chunks": {
+                        "histogram": {
+                            "field": "_seq_no",  # Uporaba sekvenčne številke
+                            "interval": 10
+                        },
+                        "aggs": {
+                            "avg_radiation": {
+                                "avg": {
+                                    "field": "REZULTAT_MERITVE"  # Preverimo, da polje obstaja in ima numerične vrednosti
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+
+            # Obdelava rezultatov, ignoriramo prazne vrednosti
+            chunked_data = [
+                {
+                    "chunk": bucket["key"],
+                    "average_radiation": bucket["avg_radiation"]["value"]
+                }
+                for bucket in response["aggregations"]["by_chunks"]["buckets"]
+                if bucket["avg_radiation"]["value"] is not None  # Izločimo prazne rezultate
+            ]
+            if chunked_data:  # Shranimo samo, če imamo podatke
+                results[dept] = chunked_data
+
+        return jsonify({"radiation_changes": results})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# IMENA DELOVNIH MEST
+@app.route('/api/get_departments', methods=['GET'])
+def get_departments():
+    """
+    Pridobi seznam vseh unikatnih delovnih mest iz Elasticsearcha.
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "unique_depts": {
+                    "terms": {
+                        "field": "DELOVNO_MESTO",
+                        "size": 10000
+                    }
+                }
+            }
+        })
+        departments = [
+            bucket["key"]
+            for bucket in response["aggregations"]["unique_depts"]["buckets"]
+        ]
+        return jsonify({"departments": departments})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/aggregations', methods=['GET'])
 def get_aggregated_data():
     """
@@ -186,53 +334,30 @@ def get_aggregated_data():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-# LEON          LEON        LEON        LEON         LEON        LEON       LEON        LEON        LEON        LEON
-@app.route('/api/exposure_by_person', methods=['GET'])
-def get_exposure_by_person():
+
+
+@app.route('/api/top_avg_radiation', methods=['GET'])
+def get_top_avg_radiation():
     """
-    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch za pridobitev
-    skupne izpostavljenosti radiaciji za vsako osebo.
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch in vrača rezultate.
     """
     try:
+        # Pošljemo agregacijsko poizvedbo na Elasticsearch
         response = es.search(index="mt-sevanje", body={
-            "size": 0,
-            "query": {
-                "bool": {
-                    "must_not": {
-                        "term": {
-                            "TIP": "ER"
-                        }
-                    }
-                }
-            },
+            "size": 0,  # Ne vračamo posameznih dokumentov, samo agregacije
             "aggs": {
-                "by_person": {
+                "avg_by_company": {
                     "terms": {
-                        "field": "OSEBA",
-                        "size": 10000
+                        "field": "COMPANY.keyword",  # Group by company
+                        "size": 10,  # Število vrnjenih podjetij
+                        "order": {
+                            "avg_radiation": "desc"  # Razvrsti po povprečnem sevanju
+                        }
                     },
                     "aggs": {
-                        "total_exposure": {
-                            "sum": {
-                                "field": "REZULTAT_MERITVE"
-                            }
-                        },
-                        "doc_count": {
-                            "value_count": {
-                                "field": "REZULTAT_MERITVE"
-                            }
-                        },
-                        "workplace": {
-                            "terms": {
-                                "field": "DELOVNO_MESTO",
-                                "size": 1
-                            }
-                        },
-                        "type": {
-                            "terms": {
-                                "field": "TIP",
-                                "size": 1
+                        "avg_radiation": {
+                            "avg": {
+                                "field": "REZULTAT_MERITVE"  # Povprečje sevanja
                             }
                         }
                     }
@@ -240,93 +365,16 @@ def get_exposure_by_person():
             }
         })
 
-        # Accessing the 'buckets' which contains the data for each person
-        buckets = response['aggregations']['by_person']['buckets']
-        
-        # Ustvarimo dictionary za združevanje podatkov
-        results_dict = {}
-        for bucket in buckets:
-            person_id = bucket['key']
-            total_exposure = bucket['total_exposure']['value']
-            doc_count = bucket['doc_count']['value']
-            
-            # Safely extract workplace and type (these might be missing)
-            workplace = bucket.get('workplace', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
-            type = bucket.get('type', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
+        companies = response['aggregations']['avg_by_company']['buckets']
 
-            # Izračun povprečne izpostavljenosti
-            average_exposure = total_exposure / doc_count if doc_count > 0 else 0
+        result = {
+            "avg_by_company": companies
+        }
 
-            # Zapišemo v slovar
-            results_dict[person_id] = {
-                "total_exposure": total_exposure,
-                "average_exposure": average_exposure,
-                "measurements_count": doc_count,
-                "workplace": workplace,
-                "type": type
-            }
+        return jsonify(result)
 
-        # Pretvorimo slovar v seznam za JSON odgovor
-        results = [
-            {
-                "person": person,
-                **data  # Dodamo vse vrednosti iz notranjega slovarja
-            }
-            for person, data in results_dict.items()
-        ]
-
-        return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/unique_workplaces', methods=['GET'])
-def get_unique_workplaces():
-    """
-    Funkcija izvaja poizvedbo na Elasticsearch, da pridobi unikatna delovna mesta.
-    """
-    try:
-        response = es.search(index="mt-sevanje", body={
-            "size": 0,
-            "aggs": {
-                "unique_workplaces": {
-                    "terms": {
-                        "field": "DELOVNO_MESTO",
-                        "size": 1000  # Omejite na željeno število delovnih mest
-                    }
-                }
-            }
-        })
-
-        # Pridobimo unikatna delovna mesta
-        unique_workplaces = [bucket['key'] for bucket in response['aggregations']['unique_workplaces']['buckets']]
-
-        return jsonify(unique_workplaces)  # Pošljemo seznam delovnih mest
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)
