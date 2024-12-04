@@ -19,15 +19,19 @@
         <!-- Gumb za bubble chart -->
         <button id="bubble-chart-button" onclick="fetchAndRenderBubbleChart()">Povprečno oddelki bubble</button>
         
-        <!-- SELEKCIJA DEPARTMENTA -->
-        <div id="department-selection">
-            <label for="department-input">Izberi delovno mesto:</label>
-            <input id="department-input" type="text" placeholder="Vpiši ali izberi..." oninput="filterDepartments()" />
-            <select id="department-dropdown" size="5" onchange="selectDepartment()">
-                <!-- Seznam bo dinamično napolnjen -->
-            </select>
-            <button id="show-data-button" onclick="fetchAndRenderDepartmentChart()">Prikaži graf</button>
+
+
+        <div>
+            <fieldset>
+                <legend>Filter delovnih mest:</legend>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()"></select>
+                <button id="button3" onclick="fetchExposure()">Oseb</button>
+                <button id="button4" onclick="fetchCompanyTrends()">Podjetij</button>
+            </fieldset>
         </div>
+
+        <button id="button5" >Žan 1</button>
+        <button id="button6" >Žan 2</button>
     </div>
 
     <!-- Main Content -->
@@ -43,9 +47,12 @@
     <script type="text/javascript" src="/static/test.js"></script>
     <script type="text/javascript" src="/static/topFive.js"></script>
     <script type="text/javascript" src="/static/topDepartments.js"></script>
-    <script type="text/javascript" src="/static/distribution.js"></script>
+    <!-- <script type="text/javascript" src="/static/distribution.js"></script>-->
     <script type="text/javascript" src="/static/avg_dept_bubble.js"></script>
-    <script type="text/javascript" src="/static/selectDepartment.js"></script>
-    <script type="text/javascript" src="/static/dept_over_time.js"></script>
+    <!--<script type="text/javascript" src="/static/selectDepartment.js"></script>
+     <script type="text/javascript" src="/static/dept_over_time.js"></script>-->
+    <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
+    <script src="/static/uniqueWorkplaces.js"></script>
+    <script src="/static/companyTrends.js"></script>
 </body>
 </html>

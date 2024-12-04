@@ -3,6 +3,8 @@ from flask_cors import CORS
 import elasticsearch
 import urllib3
 from flask import render_template
+from datetime import datetime
+
 
 # Onemogočimo opozorila za SSL certifikat
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -375,6 +377,212 @@ def get_top_avg_radiation():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/api/exposure_by_person', methods=['GET'])
+def get_exposure_by_person():
+    """
+    Funkcija izvaja agregacijsko poizvedbo na Elasticsearch za pridobitev
+    skupne izpostavljenosti radiaciji za vsako osebo.
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must_not": {
+                        "term": {
+                            "TIP": "ER"
+                        }
+                    }
+                }
+            },
+            "aggs": {
+                "by_person": {
+                    "terms": {
+                        "field": "OSEBA",
+                        "size": 10000
+                    },
+                    "aggs": {
+                        "total_exposure": {
+                            "sum": {
+                                "field": "REZULTAT_MERITVE"
+                            }
+                        },
+                        "doc_count": {
+                            "value_count": {
+                                "field": "REZULTAT_MERITVE"
+                            }
+                        },
+                        "workplace": {
+                            "terms": {
+                                "field": "DELOVNO_MESTO",
+                                "size": 1
+                            }
+                        },
+                        "type": {
+                            "terms": {
+                                "field": "TIP",
+                                "size": 1
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        # Accessing the 'buckets' which contains the data for each person
+        buckets = response['aggregations']['by_person']['buckets']
+        
+        # Ustvarimo dictionary za združevanje podatkov
+        results_dict = {}
+        for bucket in buckets:
+            person_id = bucket['key']
+            total_exposure = bucket['total_exposure']['value']
+            doc_count = bucket['doc_count']['value']
+            
+            # Safely extract workplace and type (these might be missing)
+            workplace = bucket.get('workplace', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
+            type = bucket.get('type', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
+
+            # Izračun povprečne izpostavljenosti
+            average_exposure = total_exposure / doc_count if doc_count > 0 else 0
+
+            # Zapišemo v slovar
+            results_dict[person_id] = {
+                "total_exposure": total_exposure,
+                "average_exposure": average_exposure,
+                "measurements_count": doc_count,
+                "workplace": workplace,
+                "type": type
+            }
+
+        # Pretvorimo slovar v seznam za JSON odgovor
+        results = [
+            {
+                "person": person,
+                **data  # Dodamo vse vrednosti iz notranjega slovarja
+            }
+            for person, data in results_dict.items()
+        ]
+
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/unique_workplaces', methods=['GET'])
+def get_unique_workplaces():
+    """
+    Funkcija izvaja poizvedbo na Elasticsearch, da pridobi unikatna delovna mesta.
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "unique_workplaces": {
+                    "terms": {
+                        "field": "DELOVNO_MESTO",
+                        "size": 1000  # Omejite na željeno število delovnih mest
+                    }
+                }
+            }
+        })
+
+        # Pridobimo unikatna delovna mesta
+        unique_workplaces = [bucket['key'] for bucket in response['aggregations']['unique_workplaces']['buckets']]
+
+        return jsonify(unique_workplaces)  # Pošljemo seznam delovnih mest
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/company_exposure_trends', methods=['GET'])
+def get_company_exposure_trends():
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "by_company": {
+                    "terms": {
+                        "field": "PODJETJE",
+                        "size": 10000
+                    },
+                    "aggs": {
+                        "measurements": {
+                            "top_hits": {
+                                "size": 100,
+                                "_source": {
+                                    "includes": ["DATUM_ZACETKA_MERITVE", "DATUM_KONCA_MERITVE", "REZULTAT_MERITVE", "DELOVNO_MESTO"]
+                                },
+                                "sort": [{"DATUM_ZACETKA_MERITVE": {"order": "asc"}}]
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        results = []
+        for bucket in response['aggregations']['by_company']['buckets']:
+            company_name = bucket['key']
+            measurements = bucket['measurements']['hits']['hits']
+
+            formatted_measurements = []
+            workplaces_set = set()  # Množica za unikatna delovna mesta
+
+            for m in measurements:
+                source = m['_source']
+                start_date = source.get('DATUM_ZACETKA_MERITVE')
+                end_date = source.get('DATUM_KONCA_MERITVE')
+
+                # Pretvorba datumov, če so prisotni
+                if start_date:
+                    try:
+                        start_date = datetime.strptime(start_date[:10], "%Y-%m-%d").strftime("%d.%m.%Y")
+                    except ValueError:
+                        pass
+
+                if end_date:
+                    try:
+                        end_date = datetime.strptime(end_date[:10], "%Y-%m-%d").strftime("%d.%m.%Y")
+                    except ValueError:
+                        pass
+
+                workplace = source.get('DELOVNO_MESTO')
+                if workplace:
+                    workplaces_set.add(workplace)  # Dodamo delovno mesto v množico
+
+                # Dodamo meritve brez polja `workplace`
+                formatted_measurements.append({
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "value": source.get('REZULTAT_MERITVE', 0.0)
+                })
+
+            results.append({
+                "company": company_name,
+                "unique_workplaces": list(workplaces_set),  # Dodamo seznam unikatnih delovnih mest
+                "measurements": formatted_measurements      # Meritve brez `workplace`
+            })
+
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)

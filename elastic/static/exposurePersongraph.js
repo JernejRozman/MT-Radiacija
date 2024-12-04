@@ -18,6 +18,8 @@ async function fetchExposure() {
         // Nariši scatter plot z D3.js
         createScatterPlot(data); 
         
+
+        
     } catch (error) {
         document.getElementById("loading-text").innerText = "Napaka pri pridobivanju podatkov";
         console.error("Napaka pri pridobivanju podatkov:", error);
@@ -25,32 +27,22 @@ async function fetchExposure() {
 }
 
 
+// Funkcija za posodobitev trenutne izbire v dropdownu
+document.getElementById("workplaceFilter").addEventListener('change', function() {
+    selectedWorkplaceExposure = this.value;
+    //console.log("Trenutno izbrano delovno mesto:", selectedWorkplaceExposure);
 
-
-
-// Funkcija za posodobitev vizualizacije
-function updateVisualization(data, selectedWorkplace) {
-    const dropdownButton = document.querySelector(".dropdown-button");
-    dropdownButton.textContent = selectedWorkplace || "All Workplaces";
-
-    svg.selectAll("circle")
-        .style("opacity", d => {
-            return !selectedWorkplace || d.workplace === selectedWorkplace ? 0.8 : 0.2;
-        });
-}
-
-
-
+});
 
 function createScatterPlot(data) {
-
+    console.log(selectedWorkplaceExposure)
     // Dimenzije grafa
     const margin = { top: 10, right: 30, bottom: 50, left: 60 };
     const width = 800 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
     // Počisti prejšnji graf (če obstaja)
-    d3.select("#visualization").select("svg").remove();
+    d3.select("#visualization").html("");
 
     // Pripravi SVG prostor
     const svg = d3.select("#visualization")
@@ -63,6 +55,9 @@ function createScatterPlot(data) {
     // Pripravi podatke za graf
     const xData = data.map((d, i) => i + 1); // Številka osebe na X-osi
     const yData = data.map(d => d.average_exposure);
+
+    // Seznam podjetij, ki niso izrisana
+    let nonDisplayedCompanies = [];
 
     // Nastavi skale
     const x = d3.scaleLinear()
@@ -94,9 +89,9 @@ function createScatterPlot(data) {
         .style("text-anchor", "middle")
         .text("Povprečna izpostavljenost");
 
-    // Dodaj krogce
-    const showCircleData = d3.select("body").append("div") // showCircleData element
-        .attr("class", "showCircleData")
+    // Tooltip za prikaz informacij
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
         .style("position", "absolute")
         .style("visibility", "hidden")
         .style("background-color", "white")
@@ -105,79 +100,56 @@ function createScatterPlot(data) {
         .style("border-radius", "5px")
         .style("box-shadow", "0 2px 10px rgba(0, 0, 0, 0.1)");
 
- 
-
-        svg.append("g")
+    // Dodaj oblike za podatke
+    svg.append("g")
         .selectAll("path")
         .data(data)
         .enter()
         .append("path")
-        .attr("d", function(d) {
-            // Spremenimo obliko na podlagi vrednosti atributa
-            if (d.workplace === "DELOVANJE REAKTORJA") {
-                return d3.symbol().type(d3.symbolCross).size(100)(); // Križ za "DELOVANJE REAKTORJA"
-            } else if (d.workplace === "TURIZEM") {
-                return d3.symbol().type(d3.symbolSquare).size(100)(); // Kvadrat za "TURIZEM"
+        .attr("d", d => {
+            if (d.total_exposure > 30) {
+                return d3.symbol().type(d3.symbolCross).size(100)();
+            } else if (selectedWorkplaceExposure && d.average_exposure === 0) {
+                return d3.symbol().type(d3.symbolSquare).size(100)();
             } else {
-                return d3.symbol().type(d3.symbolCircle).size(100)(); // Krog za ostale
+                return d3.symbol().type(d3.symbolCircle).size(100)();
             }
         })
-        .attr("transform", function(d, i) {
-            return `translate(${x(i + 1)}, ${y(d.average_exposure)})`; // Postavite oblike na ustrezne pozicije
-        })
+        .attr("transform", (d, i) => `translate(${x(i + 1)}, ${y(d.average_exposure)})`)
         .style("fill", d => {
-            const maximum = d3.max(data, d => d.measurements_count);
+            const maxMeasurements = d3.max(data, d => d.measurements_count);
             const colorScale = d3.scaleLinear()
-                .domain([0, maximum / 15, maximum / 5, maximum]) // Nastavi prehode
+                .domain([0, maxMeasurements / 15, maxMeasurements / 5, maxMeasurements])
                 .range(["red", "yellow", "green", "green"]);
-            return colorScale(d.measurements_count); // Uporabi barvno lestvico glede na število meritev
+            return colorScale(d.measurements_count);
         })
-        .style("opacity", function(d) {
-            // Preveri, če je izbrano delovno mesto
-            if (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure) {
-                return 1;  // Če je izbrano delovno mesto, opacity 0.8
+        .style("opacity", d => {
+            if (!selectedWorkplaceExposure || d.workplace === selectedWorkplaceExposure) {
+                
             } else {
-                return 0.05;  // Če ni izbrano delovno mesto, opacity 0.1
+                // Dodaj podjetje v seznam, če ni izrisano
+                if (!nonDisplayedCompanies.includes(d.company)) {
+                    nonDisplayedCompanies.push(d.company);
+                }
+                return 0;
             }
         })
         .on("mouseover", function(event, d) {
-            // Ob premiku miške prikaz showCircleData
-            showCircleData.transition().duration(200).style("visibility", "visible");
-    
-            showCircleData.html(`
-                <strong>Koda osebe: </strong>${d.person}<br>
-                <strong>Povprečna izpostavljenost: </strong>${d.average_exposure}<br>
-                <strong>Število meritev: </strong>${d.measurements_count}<br>
-                <strong>Skupna izpostavljenost: </strong>${d.total_exposure}<br>
-                <strong>Delovno mesto: </strong>${d.workplace}<br>
-            `);
+            tooltip.style("visibility", "visible")
+                .html(`
+                    <strong>Koda osebe:</strong> ${d.person}<br>
+                    <strong>Povprečna izpostavljenost:</strong> ${d.average_exposure.toFixed(3)} mSv<br>
+                    <strong>Število meritev:</strong> ${d.measurements_count}<br>
+                    <strong>Skupna izpostavljenost:</strong> ${d.total_exposure.toFixed(3)} mSv<br>
+                    <strong>Delovno mesto:</strong> ${d.workplace}<br>
+                `);
         })
         .on("mousemove", function(event) {
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            const mouseX = event.pageX;
-            const mouseY = event.pageY;
-    
-            const showCircleDataWidth = showCircleData.node().offsetWidth;
-            const showCircleDataHeight = showCircleData.node().offsetHeight;
-        
-            let showCircleDataX = mouseX + 10; // Dodajte nekoliko prostora
-            let showCircleDataY = mouseY + 10;
-        
-            // Preverite robove in premaknite div za prikaz
-            if (showCircleDataX + showCircleDataWidth > windowWidth) {
-                showCircleDataX = windowWidth - showCircleDataWidth - 10;
-            }
-            if (showCircleDataY + showCircleDataHeight > windowHeight) {
-                showCircleDataY = windowHeight - showCircleDataHeight - 10;
-            }
-    
-            showCircleData.style("top", showCircleDataY + "px")
-                .style("left", showCircleDataX + "px");
+            tooltip.style("top", `${event.pageY + 10}px`)
+                .style("left", `${event.pageX + 10}px`);
         })
         .on("mouseout", function() {
-            // Ob odstranitvi miške skrij showCircleData
-            showCircleData.transition().duration(200).style("visibility", "hidden");
+            tooltip.style("visibility", "hidden");
         });
-    
+
 }
