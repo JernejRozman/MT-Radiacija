@@ -1,52 +1,41 @@
 async function fetchCompanyTrends() {
-
-    // Prikaži besedilo nalaganja
     const loadingText = document.getElementById("loading-text");
     loadingText.style.display = "block";
     loadingText.innerText = "Nalaganje podatkov...";
-    //console.log("ahm")
     try {
         const response = await fetch('http://localhost:8080/api/company_exposure_trends');
         const rawData = await response.json();
 
-        // Skrij besedilo nalaganja, ko so podatki naloženi
         document.getElementById("loading-text").style.display = "none";
-        
-        // Pridobi izbrana podjetja
+
         const selectedCompanies = getCompaniesByWorkplace(rawData);
 
-        // Preveri, ali je seznam selectedCompanies prazen
-        if(selectedWorkplaceExposure="vsa delovna mesta"){
+        if(selectedWorkplaceExposure==="vsa delovna mesta" || selectedWorkplaceExposure===""){
             loadingText.style.display = "block";
-            loadingText.innerText = "Graf z vsemi delovnimi mesti je nepregleden, izberite posamezna delovna mesta";
-            // Pobriši vsebino elementa, kjer je graf
+            loadingText.innerText = "Graf z vsemi delovnimi mesti je nepregleden, v filtru izberite posamezna delovna mesta";
             d3.select("#visualization").html("");
+            return;
         }else if (selectedCompanies.length === 0) {
-            // Spremeni besedilo na sporočilo, da uporabnik izbere podjetje
             loadingText.style.display = "block";
-            loadingText.innerText = "Meritve podjetij tega delovnega mesta so povsod 0";
-
-            // Pobriši vsebino elementa, kjer je graf
+            loadingText.innerText = `Meritve podjetij za delovno mesto "${selectedWorkplaceExposure}" so povsod 0`;
             d3.select("#visualization").html("");
+            return;
         } else {
-            // Če so izbrana podjetja, odstrani obvestilo in nariši graf
-            const existingNotification = document.getElementById("notification");
-            if (existingNotification) {
-                existingNotification.remove();
-            }
-
             const dateCorrected = parseDateData(rawData);
-            createConnectedScatterplot(dateCorrected, selectedCompanies); // Tukaj uporabimo selectedCompanies
+            const companiesWithOnlyZeroValues = createConnectedScatterplot(dateCorrected, selectedCompanies); // Tukaj uporabimo selectedCompanies
+            
+            if (companiesWithOnlyZeroValues.length > 0){
+                //const loadingText = document.getElementById("loading-text");
+                loadingText.style.display = "block";
+                loadingText.innerText = "Podjetja z vsemi vrednostmi 0 so v legendi obarvana črno";
+                //loadingText.innerText = `Podjetja z vsemi vrednostmi 0: ${companiesWithOnlyZeroValues.join(", ")}`;
+            }
         }
-
     } catch (error) {
         document.getElementById("loading-text").innerText = "Napaka pri pridobivanju podatkov";
         console.error("Napaka pri pridobivanju podatkov:", error);
     }
 }
-
-
-
 
 function parseDateData(rawData) {
     return rawData.flatMap(companyData =>
@@ -59,39 +48,23 @@ function parseDateData(rawData) {
     );
 }
 
-
 function getCompaniesByWorkplace(rawData) {
     const filteredCompanies = new Set() // Uporaba množice za unikatna podjetja
     const selectedWorkplace = selectedWorkplaceExposure // Izbrano delovno mesto
-    //console.log(selectedWorkplaceExposure)
-    // Pregledamo vsako podjetje v podatkih
     rawData.forEach(companyData => {
         // Preverimo, ali vsebuje izbrano delovno mesto
         if (companyData.unique_workplaces.includes(selectedWorkplace)) {
-            filteredCompanies.add(companyData.company); // Dodamo podjetje v množico (unikatnost je samodejna)
+            filteredCompanies.add(companyData.company); // Dodamo podjetje v množico
         }
     });
-    //console.log(selectedWorkplaceExposure)
     return Array.from(filteredCompanies); // Pretvorimo množico v seznam
 }
-
-// Funkcija za posodobitev trenutne izbire v dropdownu
-document.getElementById("workplaceFilter").addEventListener('change', function() {
-    selectedWorkplaceExposure = this.value;
-    //console.log("Trenutno izbrano delovno mesto:", selectedWorkplaceExposure);
-
-});
-
-
-
-
 function createConnectedScatterplot(data, selectedCompanies) {
+    d3.select("#visualization").html("");
+
     const margin = { top: 10, right: 30, bottom: 50, left: 60 };
     const width = 800 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
-
-    //d3.select("#visualization").select("svg").remove();
-    d3.select("#visualization").html("");
     
     const svg = d3.select("#visualization")
         .attr("width", 800)
@@ -103,7 +76,7 @@ function createConnectedScatterplot(data, selectedCompanies) {
         .nice()
         .range([margin.left, width - margin.right]);
     
-    const maxCompanyValues = data.filter(d => selectedCompanies.includes(d.company));  // Filtriraj podatke za izbrana podjetja
+    const maxCompanyValues = data.filter(d => selectedCompanies.includes(d.company));
 
     const y = d3.scaleLinear()
         .domain([0, d3.max(maxCompanyValues, d => d.value)])
@@ -143,18 +116,8 @@ function createConnectedScatterplot(data, selectedCompanies) {
             .attr("font-weight", "bold")
             .text("Vrednost"));
 
-    const filteredData = data.filter(d => 
-        selectedCompanies.includes(d.company) &&
-        data.some(entry => entry.company === d.company && entry.value > 0)
-    );
+    const groupedData = d3.group(data, d => d.company);
 
-    const color = d3.scaleOrdinal()
-        .domain(selectedCompanies)
-        .range(d3.schemeCategory10);
-
-    const groupedData = d3.group(filteredData, d => d.company);
-
-    // Ustvari tooltip
     const tooltip = d3.select("body")
         .append("div")
         .style("position", "absolute")
@@ -166,78 +129,73 @@ function createConnectedScatterplot(data, selectedCompanies) {
         .style("font-size", "12px")
         .style("color", "black");
 
-    for (const [company, validValues] of groupedData.entries()) {
-        if (validValues.length > 0) {
-            svg.append("path")
-                .datum(validValues)
-                .attr("fill", "none")
-                .attr("stroke", color(company))
-                .attr("stroke-width", 2.5)
-                .attr("stroke-linejoin", "round")
-                .attr("stroke-linecap", "round")
-                .attr("d", line);
+    const companiesWithOnlyZeroValues = [];
+    const validCompanies = [];
 
-            svg.append("g")
-                .attr("fill", color(company))
-                .attr("stroke", "black")
-                .attr("stroke-width", 1)
-                .selectAll("circle, rect")  // Določimo obe obliki
-                .data(validValues)
-                .join(enter => enter
-                    .filter(d => d.value === 0)  // Če je vrednost 0, uporabimo kvadrat
-                    .append("rect")
-                    .attr("x", d => x(d.startDate) - 5)  // Pozicija za kvadrat
-                    .attr("y", d => y(d.value) - 5)      // Pozicija za kvadrat
-                    .attr("width", 10)                   // Velikost kvadrata
-                    .attr("height", 10)                  // Velikost kvadrata
-                    .attr("fill", color(company))
+    for (const [company, companyData] of groupedData.entries()) {
+        if (selectedCompanies.includes(company)) {
+            if (companyData.every(d => d.value === 0)) {
+                companiesWithOnlyZeroValues.push(company);
+            } else {
+                validCompanies.push(company);
+
+                svg.append("path")
+                    .datum(companyData)
+                    .attr("fill", "none")
+                    .attr("stroke", d3.schemeCategory10[validCompanies.indexOf(company) % 10])
+                    .attr("stroke-width", 2.5)
+                    .attr("stroke-linejoin", "round")
+                    .attr("stroke-linecap", "round")
+                    .attr("d", line);
+
+                svg.append("g")
+                    .selectAll("circle")
+                    .data(companyData.filter(d => d.value > 0))
+                    .join("circle")
+                    .attr("cx", d => x(d.startDate))
+                    .attr("cy", d => y(d.value))
+                    .attr("r", 5)
+                    .attr("fill", d3.schemeCategory10[validCompanies.indexOf(company) % 10])
                     .on("mouseover", function (event, d) {
+                        const formatDate = d3.timeFormat("%b %d, %Y");  // Mesec kot okrajšava (npr. Jul 06, 2023)
+
                         tooltip.style("visibility", "visible")
                             .html(`
                                 <strong>Podjetje:</strong> ${d.company}<br>
-                                <strong>Začetni datum:</strong> ${d.startDate}<br>
-                                <strong>Konec datuma:</strong> ${d.endDate}<br>
-                                <strong>Vrednost:</strong> ${d.value}<br>
+                                <strong>Začetni datum:</strong> ${formatDate(new Date(d.startDate))}<br>
+                                <strong>Koncni datum:</strong> ${formatDate(new Date(d.endDate))}<br>
+                                <strong>Vrednost:</strong> ${d.value}
                             `);
                     })
                     .on("mousemove", function (event) {
-                        tooltip.style("top", (event.pageY + 10) + "px")
-                            .style("left", (event.pageX + 10) + "px");
-                    })
+                        // Dobimo dimenzije okna (širina in višina)
+                        const windowWidth = window.innerWidth;
+                        const windowHeight = window.innerHeight;
+                    
+                        // Pozicija tooltipa na podlagi miške
+                        let tooltipX = event.pageX + 10; // 10 px desno od miške
+                        let tooltipY = event.pageY + 10; // 10 px spodaj od miške
+                    
+                        // Preverimo, če tooltip presega desni rob zaslona, če presega, ga premaknemo nazaj
+                        if (tooltipX + tooltip.node().getBoundingClientRect().width > windowWidth) {
+                            tooltipX = windowWidth - tooltip.node().getBoundingClientRect().width - 10;
+                        }
+                    
+                        // Preverimo, če tooltip presega spodnji rob zaslona, če presega, ga premaknemo nazaj
+                        if (tooltipY + tooltip.node().getBoundingClientRect().height > windowHeight) {
+                            tooltipY = windowHeight - tooltip.node().getBoundingClientRect().height - 10;
+                        }
+                    
+                        // Nastavimo pozicijo tooltipa
+                        tooltip.style("top", tooltipY + "px")
+                               .style("left", tooltipX + "px");
+                    })                    
                     .on("mouseout", function () {
                         tooltip.style("visibility", "hidden");
-                    })
-                    .merge(enter
-                        .filter(d => d.value !== 0)  // Če vrednost ni 0, uporabimo krog
-                        .append("circle")
-                        .attr("cx", d => x(d.startDate))  // Pozicija za krog
-                        .attr("cy", d => y(d.value))      // Pozicija za krog
-                        .attr("r", 5)                     // Polmer kroga
-                        .attr("fill", color(company))
-                        .on("mouseover", function (event, d) {
-                            tooltip.style("visibility", "visible")
-                                .html(`
-                                    <strong>Podjetje:</strong> ${d.company}<br>
-                                    <strong>Začetni datum:</strong> ${d.startDate}<br>
-                                    <strong>Konec datuma:</strong> ${d.endDate}<br>
-                                    <strong>Vrednost:</strong> ${d.value} mSv<br>
-                                `);
-                        })
-                        .on("mousemove", function (event) {
-                            tooltip.style("top", (event.pageY + 10) + "px")
-                                .style("left", (event.pageX + 10) + "px");
-                        })
-                        .on("mouseout", function () {
-                            tooltip.style("visibility", "hidden");
-                        })
-                    )
-                );
+                    });
+            }
         }
     }
-
-    svg.call(d3.zoom().on("zoom", function(event) {
-        svg.attr("transform", event.transform);
-    }));
 
     const legend = svg.append("g")
         .attr("transform", `translate(${width - 150},${margin.top})`)
@@ -250,7 +208,11 @@ function createConnectedScatterplot(data, selectedCompanies) {
         .attr("cx", 0)
         .attr("cy", 0)
         .attr("r", 5)
-        .attr("fill", d => color(d));
+        .attr("fill", d => 
+            companiesWithOnlyZeroValues.includes(d) 
+                ? "black" 
+                : d3.schemeCategory10[selectedCompanies.indexOf(d) % 10]
+        );
 
     legend.append("text")
         .attr("x", 10)
@@ -258,5 +220,6 @@ function createConnectedScatterplot(data, selectedCompanies) {
         .text(d => d)
         .attr("font-size", "12px")
         .attr("alignment-baseline", "middle");
-}
 
+    return companiesWithOnlyZeroValues;
+}

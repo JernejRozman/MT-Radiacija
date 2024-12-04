@@ -11,6 +11,8 @@
     <!-- Navbar -->
     <div class="navbar">
         <h2>Statistika</h2>
+
+        <!--Prikaz Jernejevih Gumbov-->
         <div id="top-departments-control">
             <label for="top-n">Vsota sevanja - oddelki:</label>
             <input id="top-n" type="number" min="1" value="5" />
@@ -20,7 +22,7 @@
         <button id="bubble-chart-button" onclick="fetchAndRenderBubbleChart()">Povprečno oddelki bubble</button>
         
 
-
+        <!--Prikaz Leonovih Gumbov-->
         <div>
             <fieldset>
                 <legend>Filter delovnih mest:</legend>
@@ -30,6 +32,7 @@
             </fieldset>
         </div>
 
+        <!--Prikaz Žanovih Gumbov-->
         <button id="button5" >Žan 1</button>
         <button id="button6" >Žan 2</button>
     </div>
@@ -47,12 +50,16 @@
     <script type="text/javascript" src="/static/test.js"></script>
     <script type="text/javascript" src="/static/topFive.js"></script>
     <script type="text/javascript" src="/static/topDepartments.js"></script>
-    <!-- <script type="text/javascript" src="/static/distribution.js"></script>-->
     <script type="text/javascript" src="/static/avg_dept_bubble.js"></script>
-    <!--<script type="text/javascript" src="/static/selectDepartment.js"></script>
-     <script type="text/javascript" src="/static/dept_over_time.js"></script>-->
+    <!--
+    ZAKOMENTIRAL SEM NEKATERE KER JAVLJA ERROJE IN MI NE DELA, VSAJ MENI
+    <script type="text/javascript" src="/static/selectDepartment.js"></script>
+    <script type="text/javascript" src="/static/dept_over_time.js"></script>
+    <script type="text/javascript" src="/static/distribution.js"></script>
+     -->
     <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
     <script src="/static/uniqueWorkplaces.js"></script>
     <script src="/static/companyTrends.js"></script>
+    <script src="/static/getWorkplaceFilter.js"></script>
 </body>
 </html>

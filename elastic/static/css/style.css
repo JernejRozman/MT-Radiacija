@@ -175,10 +175,10 @@ svg {
     }
 }
 
+/* Fieldset okrog Leonovih gumbov in filtra*/
 fieldset {
     border: 2px solid #000; /* Črna, debelejša obroba */
     border-radius: 5px;    /* Rahlo zaobljeni robovi */
     padding: 10px;         /* Dodaten prostor znotraj polja */
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3); /* Učinek sence */
 }
-
