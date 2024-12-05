@@ -11,19 +11,20 @@ body {
     background: linear-gradient(135deg, #eef2f3, #8e9eab);
     color: #333;
     line-height: 1.6;
-    /* Odstranimo nepotrebne lastnosti */
+    height: 100vh; /* Nastavimo višino na celoten zaslon */
+    display: flex; /* Poskrbimo za glavno flex postavitev */
+    flex-direction: row; /* Navbar in vsebina sta ob strani */
+    align-items: flex-start; /* Poravnamo zgoraj, da ne bosta preveliki */
+    overflow: hidden; /* Skrijemo odvečni del, da ne bi škatle šle čez */
 }
 
 /* Navbar Styling */
 .navbar {
-    width: 450px;
+    width: 350px; /* Ustrezno zmanjšana širina */
+    max-height: 90vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za navbar */
+    overflow-y: auto; /* Dodamo drsnik, če vsebina presega maksimalno višino */
     background: #ffffff;
     border-right: 1px solid #e0e0e0;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    overflow-y: auto;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     display: flex;
@@ -31,6 +32,7 @@ body {
     gap: 20px; /* Dodamo razmik med elementi */
 }
 
+/* Slog za naslov v navbarju */
 .navbar h2 {
     font-size: 1.5rem;
     font-weight: 700;
@@ -82,27 +84,27 @@ body {
     box-shadow: 0 4px 10px rgba(30, 136, 229, 0.2);
 }
 
-/* Department Selection Styling */
-#department-selection {
+/* Main Container for Content */
+.main-container {
+    flex: 1; /* Zavzema preostalo širino zaslona */
+    padding: 20px;
     display: flex;
     flex-direction: column;
+    max-height: 90vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za glavni del */
+    max-width: 100vh;
+    overflow-y: auto; /* Drsnik, če je vsebina prevelika */
 }
 
-/* Main Content */
-.main-container {
-    margin-left: 450px; /* Ujemanje z širino navbarja */
-    padding: 20px;
-}
-
-/* Content Area */
+/* Content Area Styling */
 .content {
     background: #ffffff;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    flex: 1; /* Zavzema preostalo višino v main-containerju */
 }
 
-/* Headings */
+/* Headings Styling */
 h1 {
     font-size: 2.5rem;
     font-weight: 700;
@@ -129,7 +131,7 @@ h1:after {
     text-align: center;
 }
 
-/* SVG Styling */
+/* SVG Styling for Visualization */
 svg {
     margin-top: 20px;
     background: #f7f7f7;
@@ -137,6 +139,7 @@ svg {
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
     max-width: 100%;
+    height: auto;
 }
 
 /* Scrollbar Styling for Navbar */
@@ -155,9 +158,15 @@ svg {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        flex-direction: column; /* Navbar in vsebina sta eden pod drugim */
+        align-items: stretch;
+    }
+
     .navbar {
         width: 100%;
         height: auto;
+        max-height: none; /* Odstranimo omejitev višine za manjše zaslone */
         position: relative;
         border-right: none;
         border-bottom: 1px solid #e0e0e0;
@@ -173,12 +182,4 @@ svg {
     h1 {
         font-size: 2rem;
     }
-}
-
-/* Fieldset okrog Leonovih gumbov in filtra*/
-fieldset {
-    border: 2px solid #000; /* Črna, debelejša obroba */
-    border-radius: 5px;    /* Rahlo zaobljeni robovi */
-    padding: 10px;         /* Dodaten prostor znotraj polja */
-    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3); /* Učinek sence */
 }
