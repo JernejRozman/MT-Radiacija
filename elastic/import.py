@@ -139,6 +139,15 @@ def clean_data(data, mapping, correction_dict):
             if value is None:
                 continue
             
+            # Preskoči vrstico, če je TIP enak 'ER'
+            # 
+            # Prej so bile 3 vrstice z TIP = ER
+            # Za vsak slučaj če bo dodana možnost dodajanja dodatnih datoke
+            # Bo tale vrstica to uredila.
+            if field == "TIP" and value == "ER":
+                skip_entry = True
+                break    
+            
             # Skip if measurement result is 0
             if field == "REZULTAT_MERITVE":
                 try:
