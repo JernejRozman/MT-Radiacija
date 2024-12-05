@@ -13,14 +13,16 @@
         <h2>Statistika</h2>
         <div id="top-departments-control">
             <label for="top-n">Vsota sevanja - oddelki:</label>
-            <input id="top-n" type="number" min="1" value="5" />
+            <input id="top-n" type="number" min="1" value="5" placeholder="Število zaposlenih" />
             <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
         </div>
         <!--Prikaz Leonovih Gumbov-->
         <div>
             <fieldset>
                 <legend>Filter delovnih mest:</legend>
-                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()"></select>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
+                    <option value="" disabled selected>Izberite delovno mesto</option>
+                </select>
                 <button id="button3" onclick="fetchExposure()">Oseb</button>
                 <button id="button4" onclick="fetchCompanyTrends()">Podjetij</button>
             </fieldset>
