@@ -583,6 +583,121 @@ def get_company_exposure_trends():
         return jsonify({"error": str(e)}), 500
     
 
+@app.route('/api/imena_podjetij', methods=['GET'])
+# Določna podjetja niso fajn za prikaz zato vzamemo sami tiste, ki imajo vsaj deset meritev radiacije
+def get_imena_podjetij():
+    """
+    Dobimo vsa imena podjetij, ki imajo vsaj 10 vnosov radiacije (radiacija > 0).
+    """
+    try:
+        response = es.search(index="mt-sevanje", body={
+            "size": 0,
+            "aggs": {
+                "imena_podjetij": {
+                    "terms": {
+                        "field": "PODJETJE",
+                        "size": 1000
+                    },
+                    "aggs": {
+                        "valid_radiation_count": {
+                            "filter": {
+                                "range": {
+                                    "REZULTAT_MERITVE": {
+                                        "gt": 0  # Preštejemo samo vnose, kjer je radiacija > 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+
+        # Filtriramo podjetja, ki imajo vsaj 10 vnosov radiacije
+        imena_podjetij = [
+            bucket['key'] for bucket in response['aggregations']['imena_podjetij']['buckets']
+            if bucket['valid_radiation_count']['doc_count'] >= 10  # Preverimo, če ima podjetje vsaj 10 veljavnih vnosov
+        ]
+
+        return jsonify(imena_podjetij)  # Pošljemo seznam podjetij
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+@app.route('/api/avg_radiacija_podjetij_po_datumih', methods=['GET'])
+def avg_radiacija_podjetij_po_datumih():
+    """
+    Vrne JSON z seznamom podjetij in dvema seznamoma: en za začetne datume in en za povprečne radiacijske vrednosti.
+    Datume pretvorimo v berljivo obliko (YYYY-MM-DD).
+    """
+    try:
+        response = es.search(
+            index="mt-sevanje",
+            body={
+                "size": 0,
+                "aggs": {
+                    "by_company": {
+                        "terms": {
+                            "field": "PODJETJE",
+                            "size": 1000
+                        },
+                        "aggs": {
+                            "by_start_date": {
+                                "terms": {
+                                    "field": "DATUM_ZACETKA_MERITVE",
+                                    "size": 1000,
+                                    "order": {
+                                        "_key": "asc"
+                                    }
+                                },
+                                "aggs": {
+                                    "avg_radiation": {
+                                        "avg": {
+                                            "field": "REZULTAT_MERITVE"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )
+
+        results = []
+        for company_bucket in response['aggregations']['by_company']['buckets']:
+            company_name = company_bucket['key']
+            starting_dates = []
+            radiation_values = []
+            
+            for date_bucket in company_bucket['by_start_date']['buckets']:
+                avg_val = date_bucket['avg_radiation']['value']
+                date_key = date_bucket['key']  # To je epoch_millis
+                
+                if avg_val is not None:
+                    # Pretvorimo timestamp (millis) v datum (YYYY-MM-DD)
+                    readable_date = datetime.utcfromtimestamp(date_key / 1000.0).strftime('%Y-%m-%d')
+                    starting_dates.append(readable_date)
+                    radiation_values.append(avg_val)
+
+            results.append({
+                "company": company_name,
+                "starting_dates": starting_dates,
+                "radiations": radiation_values
+            })
+
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(port=8080, debug=True)
