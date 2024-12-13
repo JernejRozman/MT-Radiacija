@@ -11,10 +11,22 @@
     <!-- Navbar -->
     <div class="navbar">
         <h2>Statistika</h2>
+
+
+        <!-- Jernej Tipke -->
         <div id="top-departments-control">
             <label for="top-n">Vsota sevanja - oddelki:</label>
             <input id="top-n" type="number" min="1" value="5" placeholder="Število zaposlenih" />
             <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
+
+            <!-- Dinamični črni diagram za prikaz spremembe radiacije podjetij skozi čas-->
+            <fieldset>
+                <legend>Filter Podjetij:</legend>
+                <select id="company_filter" onclick="fetchUniqueCompanies()">
+                    <option value="" disabled selected>Izberite podjetje</option>
+                </select>
+                <button id="button7" onclick="fetchAndDrawCompanyData()">Radiacija podjetij</button>
+            </fieldset>
         </div>
         <!--Prikaz Leonovih Gumbov-->
         <div>
@@ -38,7 +50,7 @@
         <div class="content">
             <h1>Sevanje - Statistika</h1>
             <p id="loading-text" class="loading">Izberite vizualizacijo</p>
-            <svg id="visualization" width="1000" height="500"></svg>
+            <svg id="visualization" width="10000" height="5000"></svg>
         </div>
     </div>
 
@@ -56,5 +68,15 @@
     <script src="/static/uniqueWorkplaces.js"></script>
     <script src="/static/companyTrends.js"></script>
     <script src="/static/getWorkplaceFilter.js"></script>
+
+    <!-- Za radiacijo podjetij skozi čas -->
+    <script type ="text/javascript" src="/static/uniqueCompanyNames.js"></script>
+    <script type ="text/javascript" src="/static/radiacija_podjetij_skozi_cas_Connected_Scatterplot.js"></script>
+    <script type ="text/javascript" src="/static/radiacijaPodjetjaSkoziCas.js"></script>
+
+
+
+
+
 </body>
 </html>
