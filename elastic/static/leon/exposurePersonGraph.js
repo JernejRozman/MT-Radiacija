@@ -1,6 +1,28 @@
 async function fetchExposure() {
     document.getElementById("loading-text").style.display = "block";
     document.getElementById("loading-text").innerText = "Nalaganje podatkov...";
+
+    const contentContainer = document.querySelector(".content");
+    const visualization = document.getElementById("visualization");
+
+    // Create the loading animation container dynamically
+    const loadingWrapper = document.createElement("div");
+    loadingWrapper.id = "loading-wrapper";
+    loadingWrapper.innerHTML = `
+      <div class="loop-wrapper">
+        <div class="mountain"></div>
+        <div class="hill"></div>
+        <div class="tree"></div>
+        <div class="tree"></div>
+        <div class="tree"></div>
+        <div class="rock"></div>
+        <div class="truck"></div>
+        <div class="wheels"></div>
+      </div>
+    `;
+    visualization.style.display = "none"; // Hide the SVG
+    contentContainer.appendChild(loadingWrapper); // Add the loading animation
+
     try {
         const response = await fetch('http://localhost:8080/api/exposure_by_person');
         const data = await response.json();
@@ -8,11 +30,25 @@ async function fetchExposure() {
         document.getElementById("loading-text").style.display = "none";
 
         createScatterPlot(data); 
+
+        //await sleep(20000); // Pause for 2 seconds
+        // Remove the loading animation and restore the SVG
+        contentContainer.removeChild(loadingWrapper);
+        visualization.style.display = "block";
     } catch (error) {
         document.getElementById("loading-text").innerText = "Napaka pri pridobivanju podatkov";
         console.error("Napaka pri pridobivanju podatkov:", error);
     }
 }
+
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+
+
 function createScatterPlot(data) {
     d3.select("#visualization").html("");
 
@@ -29,8 +65,6 @@ function createScatterPlot(data) {
 
     const xData = data.map((d, i) => i + 1); // Številka osebe na X-osi
     const yData = data.map(d => d.average_exposure);
-
-    let nonDisplayedCompanies = [];
 
     const x = d3.scaleLinear()
         .domain([0, d3.max(xData)])
@@ -109,24 +143,20 @@ function createScatterPlot(data) {
                     return colorScale(d.measurements_count);
                 })
                 .style("opacity", d => {
-                    if (selectedWorkplaceExposure === "" || selectedWorkplaceExposure === "vsa delovna mesta") {
-                        return 1;
-                    }
-                    if (d.workplace === selectedWorkplaceExposure) {
-                        return 1;
-                    }
-                    if (!nonDisplayedCompanies.includes(d.company)) {   // Dodaj podjetje v seznam, če ni izrisano
-                        nonDisplayedCompanies.push(d.company);
-                    }
-                    return 0;
+                    const opacityValue =    (selectedWorkplaceExposure === "" || 
+                                            selectedWorkplaceExposure === "vsa delovna mesta") ||
+                                            (d.workplace === selectedWorkplaceExposure) 
+                                            ? 1 : 0;
+                    //console.log(`Person: ${d.person}, Workplace: ${d.workplace}, Opacity: ${opacityValue}`);
+                    return opacityValue;
                 });
         })
         .on("mouseover", function(event, d) {
-            // Preverjanje, če je element dejansko viden
-            const currentOpacity = d3.select(this).style("opacity");
-            const rectBounds = this.getBoundingClientRect();
+            const path = d3.select(this).select("path").node();
+            const computedOpacity = parseFloat(window.getComputedStyle(path).opacity);
 
-            if (parseFloat(currentOpacity) > 0 && rectBounds.width > 0 && rectBounds.height > 0) {  // Preverimo, če je element viden
+            if (computedOpacity === 1 && (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure)) {
+                console.log(computedOpacity, `${d.person}`);
                 tooltip.style("visibility", "visible")
                     .html(`
                         <strong>Koda osebe:</strong> ${d.person}<br>

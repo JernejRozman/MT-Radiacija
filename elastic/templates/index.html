@@ -19,22 +19,22 @@
             <input id="top-n" type="number" min="1" value="5" placeholder="Število zaposlenih" />
             <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
 
+            <!-- Jernej -->
             <!-- Dinamični črni diagram za prikaz spremembe radiacije podjetij skozi čas-->
             <fieldset>
                 <legend>Filter Podjetij:</legend>
                 <select id="company_filter" onclick="fetchUniqueCompanies()">
                     <option value="" disabled selected>Izberite podjetje</option>
                 </select>
-                <button id="button7" onclick="fetchAndDrawCompanyData()">Radiacija podjetij</button>
+                <!-- <button id="button7" onclick="fetchAndDrawCompanyData()">Radiacija podjetij</button> -->
             </fieldset>
         </div>
-        <!--Prikaz Leonovih Gumbov-->
+
+        <!-- Leon -->
         <div>
             <fieldset>
                 <legend>Filter delovnih mest:</legend>
-                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
-                    <option value="" disabled selected>Izberite delovno mesto</option>
-                </select>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()"></select>
                 <button id="button3" onclick="fetchExposure()">Oseb</button>
                 <button id="button4" onclick="fetchCompanyTrends()">Podjetij</button>
             </fieldset>
@@ -43,40 +43,37 @@
         <!--Prikaz Žanovih Gumbov-->
         <button id="button5" >Žan 1</button>
         <button id="button6" >Žan 2</button>
+
     </div>
 
     <!-- Main Content -->
     <div class="main-container">
-        <div class="content">
+        <div class="content"  width="1500" height="1500">
             <h1>Sevanje - Statistika</h1>
             <p id="loading-text" class="loading">Izberite vizualizacijo</p>
-            <svg id="visualization" width="10000" height="5000"></svg>
+            <svg id="visualization"></svg>
         </div>
     </div>
 
+    
+
+    <!-- Leon -->
+    <script src="/static/leon/exposurePersonGraph.js">  </script>
+    <script src="/static/leon/uniqueWorkplaces.js">     </script>
+    <script src="/static/leon/companyTrends.js">        </script>
+    <script src="/static/leon/getWorkplaceFilter.js">   </script>
+
+    <!-- Jernej -->
     <!-- JavaScript -->
-    <script type="text/javascript" src="/static/test.js"></script>
-    <script type="text/javascript" src="/static/topFive.js"></script>
-    <script type="text/javascript" src="/static/topDepartments.js"></script>
-    <!--
-    ZAKOMENTIRAL SEM NEKATERE KER JAVLJA ERROJE IN MI NE DELA, VSAJ MENI
-    <script type="text/javascript" src="/static/selectDepartment.js"></script>
-    <script type="text/javascript" src="/static/dept_over_time.js"></script>
-    <script type="text/javascript" src="/static/distribution.js"></script>
-     -->
-    <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
-    <script src="/static/uniqueWorkplaces.js"></script>
-    <script src="/static/companyTrends.js"></script>
-    <script src="/static/getWorkplaceFilter.js"></script>
+    <script src="/static/test.js">           </script>
+    <script src="/static/topFive.js">        </script>
+    <script src="/static/topDepartments.js"> </script>
 
+    <!-- Jernej -->
     <!-- Za radiacijo podjetij skozi čas -->
-    <script type ="text/javascript" src="/static/uniqueCompanyNames.js"></script>
-    <script type ="text/javascript" src="/static/radiacija_podjetij_skozi_cas_Connected_Scatterplot.js"></script>
-    <script type ="text/javascript" src="/static/radiacijaPodjetjaSkoziCas.js"></script>
-
-
-
-
+    <script src="/static/uniqueCompanyNames.js">                                </script>
+    <script src="/static/radiacija_podjetij_skozi_cas_Connected_Scatterplot.js"></script>
+    <script src="/static/radiacijaPodjetjaSkoziCas.js">                         </script>
 
 </body>
 </html>

@@ -380,17 +380,6 @@ def get_top_avg_radiation():
     
 
 
-
-
-
-
-
-
-
-
-
-
-
 @app.route('/api/exposure_by_person', methods=['GET'])
 def get_exposure_by_person():
     """
@@ -624,8 +613,6 @@ def get_imena_podjetij():
         return jsonify({"error": str(e)}), 500
 
 
-
-
 @app.route('/api/avg_radiacija_podjetij_po_datumih', methods=['GET'])
 def avg_radiacija_podjetij_po_datumih():
     """
@@ -691,12 +678,6 @@ def avg_radiacija_podjetij_po_datumih():
         return jsonify(results)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

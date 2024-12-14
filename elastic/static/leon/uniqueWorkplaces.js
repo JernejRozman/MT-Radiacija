@@ -22,6 +22,7 @@ async function fetchUniqueWorkplaces() {
                 option.value = workplace;
                 option.textContent = workplace;
                 dropdown.appendChild(option);
+                console.log(option)
             });
         }
 

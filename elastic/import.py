@@ -55,6 +55,8 @@ data = [
 correction_dict = {
     "DIAGNOSTI?NA RADIOLOGIJA": "DIAGNOSTIČNA RADIOLOGIJA",
     "?I�?ENJE": "ČIŠČENJE",
+    "?I?ENJE": "ČIŠČENJE",
+    "ViJE": "VIŠJE",
     "POOBLA�?ENE ORGANIZACIJE": "POOBLAŠČENE ORGANIZACIJE",
     "PROIZVODNJA VLAKNIN, PAPIRJA IN KARTONA TER IZDELKOV IZ PAPIRJA IN KARTONA, ZALOŽNIŠTVO IN TISKARSTVO": "PROIZVODNJA VLAKNIN, PAPIRJA IN KARTONA TER IZDELKOV IZ PAPIRJA IN KARTONA, ZALOŽNIŠTVO IN TISKARSTVO",
     "POOBLA�?ENE ORGANIZACIJE ZA VARSTVO PRED SEVANJEM": "POOBLAŠČENE ORGANIZACIJE ZA VARSTVO PRED SEVANJEM",
@@ -190,10 +192,6 @@ def clean_data(data, mapping, correction_dict):
     return cleaned_data
 
 
-
-
-
-
 for d in data:
     print(f">>> Processing {d['file']}")
 
@@ -209,52 +207,13 @@ for d in data:
     })
 
     # Open csv file
-    with open(f"data/{d['file']}", "r", encoding='ISO-8859-1') as f:
+    with open(f"elastic/data/{d['file']}", "r", encoding='ISO-8859-1') as f:
         reader = csv.DictReader(f, fieldnames=list(d['mapping']['properties'].keys()), delimiter=';')
         data = [row for row in reader]
         data = data[1:]
         print(f">>> Read {len(data)} records")
         clean_data(data, d['mapping']['properties'],correction_dict)
         bulk_insert(data, d['index'])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
