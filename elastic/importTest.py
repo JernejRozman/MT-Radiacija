@@ -29,7 +29,7 @@ data = [
     },
 ]
 
-correction_dict = {
+correction_dict = {"IZOBRAEVANJE" : "IZOBRAŽEVANJE",
     "?I�?ENJE": "ČIŠČENJE",
     "?I�?ENJE, DEKONTAMINACIJA, ODPADKI": "ČIŠČENJE, DEKONTAMINACIJA, ODPADKI",
     "DIAGNOSTI?NA RADIOLOGIJA": "DIAGNOSTIČNA RADIOLOGIJA",
@@ -66,7 +66,9 @@ correction_dict = {
     "KARDIOVASKULARNA  KIRURGIJA" : "KARDIOVASKULARNA KIRURGIJA",
     "PROIZVODNJA VLAKNIN, PAPIRJA IN KARTONA TER IZDELKOV IZ PAPIRJA IN KARTONA, ZALO�NI�TVO IN TISKARSTVO" : "PROIZVODNJA VLAKNIN, PAPIRJA IN KARTONA TER IZDELKOV IZ PAPIRJA IN KARTONA, ZALOŽNIŠTVO IN TISKARSTVO",
     "OBDELAVA IN PREDELAVA LESAPROIZVODNJA IZDELKOV IZ LESA, PLUTE, SLAME IN PRAPROTJA, RAZEN POHI�TVA" : "OBDELAVA IN PREDELAVA LESAPROIZVODNJA IZDELKOV IZ LESA, PLUTE, SLAME IN PRAPROTJA, RAZEN POHIŠTVA",
-    "INTERVENTNA KARDIOLOGIJA -ELEKTROFIZIOLOGIJA" : "INTERVENTNA KARDIOLOGIJA - ELEKTROFIZIOLOGIJA"
+    "INTERVENTNA KARDIOLOGIJA -ELEKTROFIZIOLOGIJA" : "INTERVENTNA KARDIOLOGIJA - ELEKTROFIZIOLOGIJA",
+
+    "IZOBRAEVANJE" : "IZOBRAŽEVANJE"
 }
 
 testing_dict = [
@@ -149,10 +151,10 @@ def correct_job_titles(entry, correction_dict):
     if normalized_job_title in correction_dict:
         corrected_title = correction_dict[normalized_job_title]
         entry["DELOVNO_MESTO"] = corrected_title
-        #print(corrected_title)
-    #else:
-        #if job_title not in testing_dict:
-            #print(f"Ni najdeno v slovarju: '{job_title}'")
+        print(normalized_job_title, corrected_title)
+    else:
+        if job_title not in testing_dict:
+            print(f"Ni najdeno v slovarju: '{job_title}'")
     return entry
 
 
@@ -228,12 +230,12 @@ for d in data:
         }
     })
 
-    with open(f"elastic/data/{d['file']}", "r", encoding="utf-8", errors="replace") as f:
+    with open(f"elastic/data/{d['file']}", "r", encoding='ISO-8859-1') as f:
         reader = csv.DictReader(f, fieldnames=list(d['mapping']['properties'].keys()), delimiter=';')
         data = [row for row in reader]
         data = data[1:]
         print(f">>> Read {len(data)} records")
-        clean_data(data, d['mapping']['properties'], correction_dict)
+        clean_data(data, d['mapping']['properties'],correction_dict)
         #bulk_insert(data, d['index'])
 
 
