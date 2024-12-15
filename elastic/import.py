@@ -3,9 +3,6 @@ from elasticsearch import helpers
 import urllib3
 import csv
 from datetime import datetime
-
-
-# Če se stringi skor ujemajo
 import difflib
 
 
@@ -99,8 +96,6 @@ es = elasticsearch.Elasticsearch(
 )
 
 
-import difflib
-
 def correct_job_titles_fuzzy(entry, correction_dict):
     job_title = entry.get("DELOVNO_MESTO", "")
     
@@ -130,8 +125,6 @@ def bulk_insert(data, index, batch_size=5000):
             print(f">>> Failed to insert {len(data[i:i + batch_size])} records")
             print(data[i:i + batch_size])
             print(e)
-
-from datetime import datetime
 
 def clean_data(data, mapping, correction_dict):
     cleaned_data = []
