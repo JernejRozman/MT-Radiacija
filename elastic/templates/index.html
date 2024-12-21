@@ -19,61 +19,90 @@
             <input id="top-n" type="number" min="1" value="5" placeholder="Število zaposlenih" />
             <button id="button2" onclick="fetchTopDepartments()">Prikaži</button>
 
-            <!-- Jernej -->
             <!-- Dinamični črni diagram za prikaz spremembe radiacije podjetij skozi čas-->
             <fieldset>
                 <legend>Filter Podjetij:</legend>
                 <select id="company_filter" onclick="fetchUniqueCompanies()">
                     <option value="" disabled selected>Izberite podjetje</option>
                 </select>
-                <!-- <button id="button7" onclick="fetchAndDrawCompanyData()">Radiacija podjetij</button> -->
+                <button id="button7" onclick="fetchAndDrawCompanyData()">Radiacija podjetij</button>
             </fieldset>
         </div>
-
-        <!-- Leon -->
+        <!--Prikaz Leonovih Gumbov-->
         <div>
             <fieldset>
                 <legend>Filter delovnih mest:</legend>
-                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()"></select>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
+                    <option value="" disabled selected>Izberite delovno mesto</option>
+                </select>
                 <button id="button3" onclick="fetchExposure()">Oseb</button>
                 <button id="button4" onclick="fetchCompanyTrends()">Podjetij</button>
             </fieldset>
         </div>
 
-        <!--Prikaz Žanovih Gumbov-->
-        <button id="button5" >Žan 1</button>
-        <button id="button6" >Žan 2</button>
+         <div>
+            <fieldset>
+                <legend>Pregled plač nekaterih poklicev</legend>
+                <select id="workplace" onchange="ShowSalaries()">
+                    <option value="" disabled selected>Izberite delovno mesto</option>
+                    <option value="Zobozdravniki/zobozdravnice">Zobozdravniki/zobozdravnice</option>
+                    <option value="Zobozdravstveni asistenti">Zobozdravstveni asistenti</option>
+                    <option value="Laboratorijski tehniki/laboratorijske tehnice v biomedicini, biologiji, farmakologiji">Laboratorijski tehniki (biomedicina, biologija, farmakologija)</option>
+                    <option value="Laboratorijski tehniki/laboratorijske tehnice v zdravstvu in patologiji">Laboratorijski tehniki (zdravstvo, patologija)</option>
+                    <option value="Veterinarji/veterinarke">Veterinarji/veterinarke</option>
+                    <option value="Rudarski nadzorniki/rudarske nadzornice">Rudarski nadzorniki/rudarske nadzornice</option>
+                    <option value="Tehniki/tehnice za rudarstvo, metalurgijo">Tehniki za rudarstvo, metalurgijo</option>
+                    <option value="Inženirji/inženirke rudarstva, metalurgije">Inženirji rudarstva, metalurgije</option>
+                    <option value="Delavci/delavke za preprosta rudarska in kamnolomska dela">Delavci za rudarska dela</option>
+                    <option value="Nadzorniki/nadzornice v rudarstvu, predelovalnih dejavnostih in gradbeništvu">Nadzorniki v rudarstvu, gradbeništvu</option>
+                </select>
+            </fieldset>
+        </div>
 
+        <div>
+            <fieldset>
+                <legend><span style="font-weight: bold;">ZANIMIVOST - plače radiologov</span></legend>
+                <p>Primeraj podatke po:</p>
+                <select id="radiologi" onchange="RadioloskePlace()">
+                    <option value="0">Številu redno zaposlenih radiologov v bolnicah</option>
+                    <option value="1">Skupno bruto izplačilo v bolnicah za radiologe</option>
+                    <option value="2">Povprečni znesek v bolnicah za radiologe</option>
+                    <option value="3">Najvišje izplačilo v bolnicah za radiologe</option>
+                </select>
+            </fieldset>
+        </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-container">
-        <div class="content"  width="1500" height="1500">
+        <div class="content">
             <h1>Sevanje - Statistika</h1>
             <p id="loading-text" class="loading">Izberite vizualizacijo</p>
-            <svg id="visualization"></svg>
+            <svg id="visualization" width="10000" height="5000"></svg>
         </div>
     </div>
 
-    
-
-    <!-- Leon -->
-    <script src="/static/leon/exposurePersonGraph.js">  </script>
-    <script src="/static/leon/uniqueWorkplaces.js">     </script>
-    <script src="/static/leon/companyTrends.js">        </script>
-    <script src="/static/leon/getWorkplaceFilter.js">   </script>
-
-    <!-- Jernej -->
     <!-- JavaScript -->
-    <script src="/static/test.js">           </script>
-    <script src="/static/topFive.js">        </script>
-    <script src="/static/topDepartments.js"> </script>
+    <script type="text/javascript" src="/static/test.js"></script>
+    <script type="text/javascript" src="/static/topFive.js"></script>
+    <script type="text/javascript" src="/static/topDepartments.js"></script>
+    <!--
+    ZAKOMENTIRAL SEM NEKATERE KER JAVLJA ERROJE IN MI NE DELA, VSAJ MENI
+    <script type="text/javascript" src="/static/selectDepartment.js"></script>
+    <script type="text/javascript" src="/static/dept_over_time.js"></script>
+    <script type="text/javascript" src="/static/distribution.js"></script>
+     -->
+    <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
+    <script src="/static/uniqueWorkplaces.js"></script>
+    <script src="/static/companyTrends.js"></script>
+    <script src="/static/getWorkplaceFilter.js"></script>
 
-    <!-- Jernej -->
     <!-- Za radiacijo podjetij skozi čas -->
-    <script src="/static/uniqueCompanyNames.js">                                </script>
-    <script src="/static/radiacija_podjetij_skozi_cas_Connected_Scatterplot.js"></script>
-    <script src="/static/radiacijaPodjetjaSkoziCas.js">                         </script>
+    <script type ="text/javascript" src="/static/uniqueCompanyNames.js"></script>
+    <script type ="text/javascript" src="/static/radiacija_podjetij_skozi_cas_Connected_Scatterplot.js"></script>
+    <script type ="text/javascript" src="/static/radiacijaPodjetjaSkoziCas.js"></script>
 
+    <script type ="text/javascript" src="/static/PrikazPlac.js"></script>
+    <script type ="text/javascript" src="/static/RadiologiPlacePoSloveniji.js"></script>
 </body>
 </html>
