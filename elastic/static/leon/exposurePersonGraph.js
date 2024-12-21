@@ -50,11 +50,17 @@ function sleep(ms) {
 
 
 function createScatterPlot(data) {
-    d3.select("#visualization").html("");
 
-    const margin = { top: 10, right: 30, bottom: 50, left: 60 };
-    const width = 800 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
+
+    const visualization = d3.select("#visualization");
+    visualization.html("");  // To bo odstranilo prejšnji SVG element
+
+ 
+
+    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    const width = 600 - margin.left - margin.right; // Širina notranjega grafa
+    const height = 400 - margin.top - margin.bottom; // Višina notranjega grafa
+
 
     const svg = d3.select("#visualization")
         .append("svg")
@@ -106,23 +112,14 @@ function createScatterPlot(data) {
         .style("border-radius", "5px")
         .style("box-shadow", "0 2px 10px rgba(0, 0, 0, 0.1)");
 
-    svg.append("g")
+        svg.append("g")
         .selectAll("path")
         .data(data)
         .enter()
-        .append("g")  // Uporabimo <g> element, da vključimo tako simbol kot tudi zaznavni pravokotnik
+        .append("g")  // Skupina za simbole
         .each(function(d, i) {
             const group = d3.select(this);
-
-            // Dodamo večje območje za hover (neviden pravokotnik)
-            group.append("rect")
-                .attr("x", x(i + 1) - 10)  // Pozicioniramo pravokotnik okoli simbola
-                .attr("y", y(d.average_exposure) - 10)
-                .attr("width", 20)  // Velikost območja za hover
-                .attr("height", 20)
-                .style("fill", "transparent")  // Pravokotnik bo neviden
-                .style("pointer-events", "all");  // Omogoči zaznavanje hoverja na območju
-
+    
             // Dodamo simbol (krog, križ ali kvadrat)
             group.append("path")
                 .attr("d", d => {
@@ -143,54 +140,62 @@ function createScatterPlot(data) {
                     return colorScale(d.measurements_count);
                 })
                 .style("opacity", d => {
-                    const opacityValue =    (selectedWorkplaceExposure === "" || 
-                                            selectedWorkplaceExposure === "vsa delovna mesta") ||
-                                            (d.workplace === selectedWorkplaceExposure) 
-                                            ? 1 : 0;
-                    //console.log(`Person: ${d.person}, Workplace: ${d.workplace}, Opacity: ${opacityValue}`);
+                    const opacityValue = (selectedWorkplaceExposure === "" || 
+                                         selectedWorkplaceExposure === "vsa delovna mesta" ||
+                                         d.workplace === selectedWorkplaceExposure)
+                                         ? 1 : 0;
                     return opacityValue;
+                })
+                .style("pointer-events", d => {
+                    return (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure) ? "all" : "none";
+                })
+                .on("mouseover", function(event, d) {
+                    if (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure) {
+                        tooltip.style("visibility", "visible")
+                            .html(`
+                                <strong>Koda osebe:</strong> ${d.person}<br>
+                                <strong>Povprečna izpostavljenost:</strong> ${d.average_exposure.toFixed(3)} mSv<br>
+                                <strong>Število meritev:</strong> ${d.measurements_count}<br>
+                                <strong>Skupna izpostavljenost:</strong> ${d.total_exposure.toFixed(3)} mSv<br>
+                                <strong>Delovno mesto:</strong> ${d.workplace}<br>
+                            `);
+                    }
+                })
+                .on("mousemove", function (event) {
+                    // Koordinati miške na zaslonu
+                    const [svgX, svgY] = [event.pageX, event.pageY];
+    
+                    // Velikost okna (širina in višina)
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+    
+                    // Pozicija tooltipa z rahlim odmikom
+                    let tooltipX = svgX + 10;
+                    let tooltipY = svgY + 10;
+    
+                    // Preprečimo preseganje roba zaslona (desni rob)
+                    if (tooltipX + tooltip.node().getBoundingClientRect().width > windowWidth) {
+                        tooltipX = windowWidth - tooltip.node().getBoundingClientRect().width - 10;
+                    }
+    
+                    // Preprečimo preseganje roba zaslona (spodnji rob)
+                    if (tooltipY + tooltip.node().getBoundingClientRect().height > windowHeight) {
+                        tooltipY = windowHeight - tooltip.node().getBoundingClientRect().height - 10;
+                    }
+    
+                    // Nastavimo pozicijo tooltipa
+                    tooltip.style("top", tooltipY + "px")
+                           .style("left", tooltipX + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.style("visibility", "hidden");
+                })
+                // Dogodek za dvojni klik, da se točka odstrani
+                .on("dblclick", function(event, d) {
+                    // Odstranimo točko iz grafa
+                    d3.select(this).remove(); // Izbriše celotno skupino (in simbol)
                 });
-        })
-        .on("mouseover", function(event, d) {
-            const path = d3.select(this).select("path").node();
-            const computedOpacity = parseFloat(window.getComputedStyle(path).opacity);
-
-            if (computedOpacity === 1 && (selectedWorkplaceExposure === "" || d.workplace === selectedWorkplaceExposure)) {
-                console.log(computedOpacity, `${d.person}`);
-                tooltip.style("visibility", "visible")
-                    .html(`
-                        <strong>Koda osebe:</strong> ${d.person}<br>
-                        <strong>Povprečna izpostavljenost:</strong> ${d.average_exposure.toFixed(3)} mSv<br>
-                        <strong>Število meritev:</strong> ${d.measurements_count}<br>
-                        <strong>Skupna izpostavljenost:</strong> ${d.total_exposure.toFixed(3)} mSv<br>
-                        <strong>Delovno mesto:</strong> ${d.workplace}<br>
-                    `);
-            }
-        })
-        .on("mousemove", function (event) {
-            // Dobimo dimenzije okna (širina in višina)
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-        
-            // Pozicija tooltipa na podlagi miške
-            let tooltipX = event.pageX + 10; // 10 px desno od miške
-            let tooltipY = event.pageY + 10; // 10 px spodaj od miške
-        
-            // Preverimo, če tooltip presega desni rob zaslona, če presega, ga premaknemo nazaj
-            if (tooltipX + tooltip.node().getBoundingClientRect().width > windowWidth) {
-                tooltipX = windowWidth - tooltip.node().getBoundingClientRect().width - 10;
-            }
-        
-            // Preverimo, če tooltip presega spodnji rob zaslona, če presega, ga premaknemo nazaj
-            if (tooltipY + tooltip.node().getBoundingClientRect().height > windowHeight) {
-                tooltipY = windowHeight - tooltip.node().getBoundingClientRect().height - 10;
-            }
-        
-            // Nastavimo pozicijo tooltipa
-            tooltip.style("top", tooltipY + "px")
-                   .style("left", tooltipX + "px");
-        })        
-        .on("mouseout", function() {
-            tooltip.style("visibility", "hidden");
         });
+    
+        
 }

@@ -1,6 +1,3 @@
-// import showAtomAnimation from './atomAnimation.js';
-
-
 async function fetchCompanyTrends() {
 
     const contentContainer = document.querySelector(".content");
@@ -129,6 +126,7 @@ function getCompaniesByWorkplace(rawData) {
 
 function createConnectedScatterplot(data, selectedCompanies) {
     d3.select("#visualization").html("");
+    d3.select("#visualization").select("svg").remove();
 
     const customColors = [
         "#1f77b4", // modra
@@ -157,7 +155,7 @@ function createConnectedScatterplot(data, selectedCompanies) {
         "#bcbd22", // rumena
     ];
     
-    const margin = { top: 10, right: 30, bottom: 50, left: 60 };
+    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
     const width = 800 - margin.left - margin.right;
     const height = 600 - margin.top - margin.bottom;
     
@@ -319,7 +317,7 @@ function createConnectedScatterplot(data, selectedCompanies) {
     
 
     const legend = svg.append("g")
-        .attr("transform", `translate(${width - 150},${margin.top})`)
+        .attr("transform", `translate(${width - 50},${margin.top})`)
         .selectAll("g")
         .data(selectedCompanies)
         .join("g")

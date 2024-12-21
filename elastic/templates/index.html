@@ -32,9 +32,9 @@
         <div>
             <fieldset>
                 <legend>Filter delovnih mest:</legend>
-                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()">
-                    <option value="" disabled selected>Izberite delovno mesto</option>
-                </select>
+                <select id="workplaceFilter" onclick="fetchUniqueWorkplaces()"></select>
+                    <!-- <option value="" disabled selected>Izberite delovno mesto</option> -->
+                
                 <button id="button3" onclick="fetchExposure()">Oseb</button>
                 <button id="button4" onclick="fetchCompanyTrends()">Podjetij</button>
             </fieldset>
@@ -86,16 +86,11 @@
     <script type="text/javascript" src="/static/test.js"></script>
     <script type="text/javascript" src="/static/topFive.js"></script>
     <script type="text/javascript" src="/static/topDepartments.js"></script>
-    <!--
-    ZAKOMENTIRAL SEM NEKATERE KER JAVLJA ERROJE IN MI NE DELA, VSAJ MENI
-    <script type="text/javascript" src="/static/selectDepartment.js"></script>
-    <script type="text/javascript" src="/static/dept_over_time.js"></script>
-    <script type="text/javascript" src="/static/distribution.js"></script>
-     -->
-    <script type="text/javascript" src="/static/exposurePersonGraph.js"></script>
-    <script src="/static/uniqueWorkplaces.js"></script>
-    <script src="/static/companyTrends.js"></script>
-    <script src="/static/getWorkplaceFilter.js"></script>
+
+    <script type="text/javascript" src="/static/leon/exposurePersonGraph.js"></script>
+    <script src="/static/leon/uniqueWorkplaces.js"></script>
+    <script src="/static/leon/companyTrends.js"></script>
+    <script src="/static/leon/getWorkplaceFilter.js"></script>
 
     <!-- Za radiacijo podjetij skozi čas -->
     <script type ="text/javascript" src="/static/uniqueCompanyNames.js"></script>

@@ -420,12 +420,6 @@ def get_exposure_by_person():
                                 "field": "DELOVNO_MESTO",
                                 "size": 1
                             }
-                        },
-                        "type": {
-                            "terms": {
-                                "field": "TIP",
-                                "size": 1
-                            }
                         }
                     }
                 }
@@ -444,7 +438,6 @@ def get_exposure_by_person():
             
             # Safely extract workplace and type (these might be missing)
             workplace = bucket.get('workplace', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
-            type = bucket.get('type', {}).get('buckets', [{}])[0].get('key', 'N/A')  # Default to 'N/A' if not found
 
             # Izračun povprečne izpostavljenosti
             average_exposure = total_exposure / doc_count if doc_count > 0 else 0
@@ -455,7 +448,6 @@ def get_exposure_by_person():
                 "average_exposure": average_exposure,
                 "measurements_count": doc_count,
                 "workplace": workplace,
-                "type": type
             }
 
         # Pretvorimo slovar v seznam za JSON odgovor
@@ -471,6 +463,48 @@ def get_exposure_by_person():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+corrections = {
+    "?I\u008a?ENJE": "ČIŠČENJE",
+    "?I\u008a?ENJE, DEKONTAMINACIJA, ODPADKI": "ČIŠČENJE, DEKONTAMINACIJA, ODPADKI",
+    "DIAGNOSTI?NA RADIOLOGIJA": "DIAGNOSTIČNA RADIOLOGIJA",
+    "ELEKTRI?NO IN IN\u008aTRUMENTACIJSKO VZDR\u008eEVANJE": "ELEKTRIČNO IN INŠTRUMENTACIJSKO VZDRŽEVANJE",
+    "GINEKOLOGIJA S PORODNI\u008aTVOM": "GINEKOLOGIJA S PORODNIŠTVOM",
+    "GRADBENI\u008aTVO": "GRADBENIŠTVO",
+    "INTERVENTNA KARDIOLOGIJA - IN\u008aTRUMENTARKE": "INTERVENTNA KARDIOLOGIJA - INŠTRUMENTARKE",
+    "IZOBRA\u008eEVANJE": "IZOBRAŽEVANJE",
+    "KARDIOVASKULARNA  KIRURGIJA": "KARDIOVASKULARNA KIRURGIJA",
+    "NUJNA MEDICINSKA POMO?": "NUJNA MEDICINSKA POMOČ",
+    "OBDELAVA IN PREDELAVA LESAPROIZVODNJA IZDELKOV IZ LESA, PLUTE, SLAME IN PRAPROTJA, RAZEN POHI\u008aTVA": "OBDELAVA IN PREDELAVA LESA, PROIZVODNJA IZDELKOV IZ LESA, PLUTE, SLAME IN PRAPROTJA, RAZEN POHIŠTVA",
+    "PLASTI?NA KIRURGIJA": "PLASTIČNA KIRURGIJA",
+    "POSPE\u008aEVALNIKI": "POSPEŠEVALNIKI",
+    "PROIZVODNJA  IZDELKOV IZ GUME IN PLASTI?NIH MAS": "PROIZVODNJA IZDELKOV IZ GUME IN PLASTIČNIH MAS",
+    "PROIZVODNJA ELEKTRI?NE IN OPTI?NE OPREME": "PROIZVODNJA ELEKTRIČNE IN OPTIČNE OPREME",
+    "PROIZVODNJA HRANE, PIJA?, KRMIL IN TOBA?NIH IZDELKOV": "PROIZVODNJA HRANE, PIJAČ, KRMIL IN TOBAČNIH IZDELKOV",
+    "PROIZVODNJA IZKLJU?NO FE IN IZDELKOV IN FE": "PROIZVODNJA IZKLJUČNO FE IN IZDELKOV IN FE",
+    "PROIZVODNJA KEMIKALIJ, KEMI?NIH IZDELOKOV, UMETNIH VLAKEN": "PROIZVODNJA KEMIKALIJ, KEMIČNIH IZDELOKOV, UMETNIH VLAKEN",
+    "PROIZVODNJA POHI\u008aTVA IN DRUGE PREDELOVALNE DEJAVNOSTI, RECIKLA\u008eA": "PROIZVODNJA POHIŠTVA IN DRUGE PREDELOVALNE DEJAVNOSTI, RECIKLIRANJE",
+    "SERVIS IN VZDR\u008eEVANJE": "SERVIS IN VZDRŽEVANJE",
+    "SERVISNE SLU\u008dBE IZVEN INDUSTRIJSKE PANOGE": "SERVISNE SLUŽBE IZVEN INDUSTRIJSKE PANOGE",
+    "SPL\u008aNA KIRURGIJA": "SPLOŠNA KIRURGIJA",
+    "SPL\u008aNA PEDIATRIJA": "SPLOŠNA PEDIATRIJA",
+    "SPL\u0160NO ZOBOZDRAVSTVO": "SPLOŠNO ZOBOZDRAVSTVO",
+    "STOMATOLO\u008aKA PROTETIKA": "STOMATOLOŠKA PROTETIKA",
+    "TELETERAPIJA": "TELETERAPIJA",
+    "TERAPIJA IN DIAGNOSTIKA": "TERAPIJA IN DIAGNOSTIKA",
+    "TORAKALNA KIRURGIJA": "TORAKALNA KIRURGIJA",
+    "TURIZEM": "TURIZEM",
+    "UROLOGIJA": "UROLOGIJA",
+    "VARSTVO PRED SEVANJEM": "VARSTVO PRED SEVANJEM",
+    "VI\u008aJE IN VISOKO\u008aOLSKA IZOBRA\u008eEVALNA USTANOVA": "VIŠJE IN VISOKOŠOLSKA IZOBRAŽEVALNA USTANOVA",
+    "VI\u0160JE IN VISOKO\u0160OLSKA IZOBRA\u017dEVALNA USTANOVA": "VIŠJE IN VISOKOŠOLSKA IZOBRAŽEVALNA USTANOVA",
+    "ZOBNA RADIOLOGIJA": "ZOBNA RADIOLOGIJA",
+    "ČI\u0160\u010cENJE": "ČIŠČENJE",
+    "ČI\u0160\u010cENJE, DEKONTAMINACIJA, ODPADKI": "ČIŠČENJE, DEKONTAMINACIJA, ODPADKI"
+}
+
+# Funkcija za popravljanje napačnih zapisov
+def correct_workplaces(workplaces):
+    return [corrections.get(workplace, workplace) for workplace in workplaces]
 
 @app.route('/api/unique_workplaces', methods=['GET'])
 def get_unique_workplaces():
@@ -493,7 +527,10 @@ def get_unique_workplaces():
         # Pridobimo unikatna delovna mesta
         unique_workplaces = [bucket['key'] for bucket in response['aggregations']['unique_workplaces']['buckets']]
 
-        return jsonify(unique_workplaces)  # Pošljemo seznam delovnih mest
+        # Razvrstimo delovna mesta po abecedi
+        unique_workplaces_sorted = sorted(unique_workplaces)
+
+        return jsonify(unique_workplaces_sorted)  # Pošljemo seznam popravljenih delovnih mest
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -571,7 +608,6 @@ def get_company_exposure_trends():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-
 @app.route('/api/imena_podjetij', methods=['GET'])
 # Določna podjetja niso fajn za prikaz zato vzamemo sami tiste, ki imajo vsaj deset meritev radiacije
 def get_imena_podjetij():
