@@ -21,7 +21,7 @@ body {
 /* Navbar Styling */
 .navbar {
     width: 350px; /* Ustrezno zmanjšana širina */
-    max-height: 90vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za navbar */
+    max-height: 100vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za navbar */
     overflow-y: auto; /* Dodamo drsnik, če vsebina presega maksimalno višino */
     background: #ffffff;
     border-right: 1px solid #e0e0e0;
