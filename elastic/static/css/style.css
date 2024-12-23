@@ -86,24 +86,31 @@ body {
 
 /* Main Container for Content */
 .main-container {
-    flex: 1; /* Zavzema preostalo širino zaslona */
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za glavni del */
-    max-width: 100vh;
-    overflow-y: auto; /* Drsnik, če je vsebina prevelika */
-    width: 1000px;
+  flex: 1; /* Zavzema preostalo višino */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Zavzema celotno višino zaslona */
+  width: 100%; /* Raztegne se čez celotno širino */
+  overflow-y: auto; /* Omogoča vertikalni drsnik */
+  background-color: #1976d2; /* Dodajte barvo ozadja po potrebi */
 }
 
-/* Content Area Styling */
 .content {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    flex: 1; /* Zavzema preostalo višino v main-containerju */
+  width: 90%; /* Zavzame 90% širine okna */
+  max-width: 1200px; /* Nastavi največjo širino za večje ekrane */
+  height: calc(100vh - 40px); /* Zavzame celotno višino strani, minus nekaj za robove */
+  margin: 20px auto; /* Centrirano znotraj in dodan zgornji/spodnji rob */
+  padding: 20px; /* Dodaj notranje zamike */
+  background: #ffffff; /* Bela vsebina */
+  border-radius: 10px; /* Zaobljeni robovi */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Rahla senca */
+  display: flex; /* Za prilagoditev vsebine */
+  flex-direction: column; /* Postavitev vsebine navpično */
+  justify-content: center; /* Poravnava po sredini vertikalno */
+  overflow: hidden; /* Prepreči, da karkoli štrli ven */
 }
+
 
 /* Headings Styling */
 h1 {
@@ -132,17 +139,16 @@ h1:after {
     text-align: center;
 }
 
-/* SVG Styling for Visualization */
 svg {
-    margin-top: 20px;
-    background: #f7f7f7;
-    border: 2px solid #e3f2fd;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    max-width: 100%;
-    height: auto;
-    height: 400px;
-    width: 600px;
+  display: block; /* Odstranimo morebitne odvečne presledke okrog SVG */
+  margin: 0 auto; /* Centriramo SVG */
+  background: #f7f7f7; /* Svetlo sivo ozadje */
+  border: 2px solid #e3f2fd;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  width: 100%; /* Zavzame širino starševskega elementa */
+  height: auto; /* Ohranimo pravilno razmerje stranic */
+  max-height: calc(100% - 40px); /* Preprečimo, da SVG preseže prostor znotraj starša */
 }
 
 /* Scrollbar Styling for Navbar */
