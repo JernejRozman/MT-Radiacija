@@ -20,16 +20,16 @@ body {
 
 /* Navbar Styling */
 .navbar {
-    width: 350px; /* Ustrezno zmanjšana širina */
-    max-height: 100vh; /* MAX VIŠINA: Tukaj nastavimo maksimalno višino za navbar */
-    overflow-y: auto; /* Dodamo drsnik, če vsebina presega maksimalno višino */
-    background: #ffffff;
-    border-right: 1px solid #e0e0e0;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Dodamo razmik med elementi */
+  width: 350px; /* Fiksna širina za navbar */
+  height: 100vh; /* Navbar zavzame celotno višino zaslona */
+  overflow-y: auto; /* Dodamo drsnik, če vsebina presega višino */
+  background: #ffffff; /* Barva ozadja */
+  border-right: 1px solid #e0e0e0; /* Doda rob na desni */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1); /* Senca za 3D učinek */
+  padding: 20px; /* Notranji razmik */
+  display: flex;
+  flex-direction: column; /* Postavitev elementov v stolpec */
+  gap: 20px; /* Razmik med elementi v navbarju */
 }
 
 /* Slog za naslov v navbarju */
