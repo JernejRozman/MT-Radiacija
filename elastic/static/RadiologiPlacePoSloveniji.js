@@ -1,130 +1,139 @@
 function RadioloskePlace() {
-    // Definirani podatki za radiologe
+    // Podatki za bolnišnice
     const RadiologiP = {
         "UKC Maribor": [41, 215545, 5257, 10991],
         "SB Celje": [6, 45417, 7570, 4145],
         "SB Novo mesto": [7, 50825, 7261, 7756],
         "SB Izola": [11, 160000, 6257, 11188],
-        "SB Murska Sobota": [4, 25655, 6414, 9329],
         "SB Nova Gorica": [10, 68086, 6809, 12858]
     };
 
-    // Barve iz slike
+    // Barve za kroge
     const barColors = ["#1E0E64", "#2B1B96", "#482FDF", "#5A68F2", "#8CA5F7", "#A9B9F9"];
 
-    // Pridobimo izbrano vrednost
+    // Pridobitev izbrane vrednosti iz <select>
     const select = document.getElementById("radiologi");
-    const izbranaVrednost = parseInt(select.value);
+    const izbranaVrednost = parseInt(select.value); // Pridobi indeks izbranega stolpca
+    const prikaziEuro = izbranaVrednost !== 0; // Dodaj € za vse, razen za prvo možnost
 
-    // Izpis besedila "Nalaganje podatkov"
-    const loadingText = document.getElementById("loading-text");
-    loadingText.style.display = "block";
-    loadingText.innerText = select.options[select.selectedIndex].text;
-
-    // Pripravimo podatke za vizualizacijo (sortiramo glede na izbrano vrednost)
-    const sortedData = Object.entries(RadiologiP)
-        .sort((a, b) => b[1][izbranaVrednost] - a[1][izbranaVrednost]); // Sortiranje od največje do najmanjše
-
-    // Dimenzije SVG
-    const width = 940;
-    const totalHeight = 500;
-    const barWidths = width;
-    const barHeights = [130, 105, 90, 70, 60, 50]; // Višine od največjega proti najmanjšemu
-
-    // Dinamično izračunane velikosti pisave
-    const baseFontSize = 40; // Največja velikost pisave
-    const fontScaleFactor = 0.8; // Faktor zmanjšanja pisave
-
-    // Počistimo prejšnjo vizualizacijo
-    d3.select("#visualization").selectAll("*").remove();
-
-    // Ustvarimo SVG
+    // Nastavitve SVG platna
+    const svgWidth = 1000;
+    const svgHeight = 500;
     const svg = d3.select("#visualization")
-        .attr("width", width)
-        .attr("height", totalHeight)
-        .style("display", "block");
+        .attr("width", svgWidth)
+        .attr("height", svgHeight);
 
-    // Tooltip
+    // Čiščenje obstoječih elementov
+    svg.selectAll("*").remove();
+
+    // Sortiranje podatkov glede na izbrano vrednost
+    const sortedData = Object.entries(RadiologiP).sort((a, b) => b[1][izbranaVrednost] - a[1][izbranaVrednost]);
+
+    // Nastavitve za kroge
+    const maxRadius = 130; // Največji polmer kroga
+    const minRadius = 40; // Najmanjši polmer kroga
+    const radiusScale = d3.scaleLinear()
+        .domain([0, sortedData.length - 1])
+        .range([maxRadius, minRadius]); // Krogi postopno manjšajo velikost
+
+    // Izračun skupne širine vseh krogov (da bodo poravnani na sredino)
+    const totalWidth = sortedData.reduce((acc, _, i) => acc + 2 * radiusScale(i), 0);
+
+    // Začetna X-koordinata za poravnavo na sredino
+    let currentX = (svgWidth - totalWidth) / 2;
+
+    // Dodajanje tooltipa
     const tooltip = d3.select("body")
         .append("div")
         .style("position", "absolute")
-        .style("color", "white")
-        .style("padding", "10px")
+        .style("padding", "5px 10px")
+        .style("background-color", "white")
+        .style("color", "black")
         .style("border-radius", "5px")
-        .style("font-size", "1.2rem")
-        .style("display", "none")
-        .style("pointer-events", "none");
+        .style("pointer-events", "none")
+        .style("opacity", 0);
 
-    // Dodamo pravokotnike in besedila
-    let yOffset = 0; // Za vertikalni odmik
+    // Funkcija za prilagoditev besedila v krogu
+    function wrapText(textElement, text, radius) {
+        const words = text.split(" ");
+        const lineHeight = radius * 0.3; // Razmik med vrsticami
+        let line = [];
+        let yOffset = 0;
+        let lines = [];
 
-    sortedData.forEach((d, i) => {
-        const vrednost = d[1][izbranaVrednost];
+        // Razdelitev besedila v vrstice, ki se prilegajo širini kroga
+        words.forEach((word) => {
+            line.push(word);
+            const testLine = line.join(" ");
+            textElement.text(testLine);
 
-        // Dinamično izračunamo velikost pisave glede na višino pravokotnika
-        const fontSize = `${baseFontSize * Math.pow(fontScaleFactor, i)}px`;
+            // Če je vrstica predolga, jo razdeli
+            if (textElement.node().getComputedTextLength() > radius * 1.8) {
+                line.pop();
+                lines.push(line.join(" "));
+                line = [word];
+            }
+        });
 
-        // Preverimo, ali je izbrana vrednost 2, 3 ali 4 (to pomeni, da so vrednosti v evrih)
-        let valueText = vrednost.toLocaleString();
-        if (izbranaVrednost === 1 || izbranaVrednost === 2 || izbranaVrednost === 3) {
-            valueText += " €"; // Dodamo evro znak
+        // Dodaj zadnjo vrstico
+        if (line.length > 0) {
+            lines.push(line.join(" "));
         }
 
-        // Dodamo skupino za vsak pravokotnik in besedilo
-        const group = svg.append("g")
-            .attr("transform", `translate(0, ${yOffset})`);
+        // Vertikalna centriranost
+        const totalHeight = lines.length * lineHeight;
+        const startY = (svgHeight / 2) - (totalHeight / 2) + lineHeight / 2;
 
-        // Dodamo pravokotnik
-        group.append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", barWidths)
-            .attr("height", barHeights[i])
-            .attr("fill", barColors[i])
-            .on("mouseover", function (event) {
-                // Nastavimo ozadje tooltipa na barvo trenutnega pravokotnika
-                tooltip.style("background", barColors[i]) // Barva tooltipa se ujema z barvo pravokotnika
-                    .style("display", "block")
-                    .html(`
-                        <strong>${d[0]}</strong><br>
-                        Vrednost: ${valueText}<br>
-                    `);
+        // Izrisovanje vrstic
+        lines.forEach((line, index) => {
+            textElement.append("tspan")
+                .attr("x", textElement.attr("x"))
+                .attr("y", startY + index * lineHeight)
+                .text(line)
+                .attr("dy", `${index === 0 ? 0 : lineHeight}`);
+        });
+    }
 
-                // Prilagodimo dimenzije tooltipa glede na vsebino
-                const tooltipWidth = tooltip.node().offsetWidth;
-                const tooltipHeight = tooltip.node().offsetHeight;
+    // Risanje krogov
+    sortedData.forEach((item, index) => {
+        const [name, values] = item;
+        const value = values[izbranaVrednost];
+        const radius = radiusScale(index);
 
-                // Dodamo pravokotnik ozadja z dinamično velikostjo
-                tooltip.insert("rect")
-                    .attr("x", -5)
-                    .attr("y", -5)
-                    .attr("width", tooltipWidth + 10)
-                    .attr("height", tooltipHeight + 10)
-                    .attr("fill", barColors[i]) // Barva ozadja se ujema z barvo pravokotnika
-                    .attr("rx", 5)  // Zaokroženi robovi
-                    .attr("ry", 5); // Zaokroženi robovi
+        // Dodajanje kroga
+        const circle = svg.append("circle")
+            .attr("cx", currentX + radius)
+            .attr("cy", svgHeight / 2)
+            .attr("r", radius)
+            .attr("fill", barColors[index])
+            .on("mouseover", function () {
+                tooltip
+                    .style("opacity", 1)
+                    .style("background-color", barColors[index])
+                    .style("color", "white")
+                    .html(`${name}: ${value}${prikaziEuro ? " €" : ""}`);
             })
             .on("mousemove", function (event) {
-                tooltip.style("top", `${event.pageY + 10}px`)
-                    .style("left", `${event.pageX + 10}px`);
+                tooltip
+                    .style("top", `${event.pageY - 40}px`)
+                    .style("left", `${event.pageX + 20}px`);
             })
             .on("mouseout", function () {
-                tooltip.style("display", "none");
-                tooltip.select("rect").remove(); // Odstranimo pravokotnik ozadja, ko je miška zunaj
+                tooltip.style("opacity", 0);
             });
 
-        // Dodamo besedilo (ime bolnice)
-        group.append("text")
-            .attr("x", barWidths / 2)
-            .attr("y", barHeights[i] / 2)
-            .attr("dy", ".35em")
-            .attr("fill", "white")
-            .attr("font-size", fontSize) // Dinamična velikost pisave
-            .attr("font-weight", "bold")
+        // Dodajanje imena bolnice v krog
+        const textElement = svg.append("text")
+            .attr("x", currentX + radius)
+            .attr("y", svgHeight / 2)
             .attr("text-anchor", "middle")
-            .text(d[0]);
+            .attr("fill", "white")
+            .attr("font-size", `${radius * 0.18}px`)
+            .attr("font-weight", "bold");
 
-        // Povečamo yOffset za naslednji pravokotnik
-        yOffset += barHeights[i];
+        wrapText(textElement, name, radius);
+
+        // Posodobi X-koordinato za naslednji krog
+        currentX += 2 * radius;
     });
 }
