@@ -15,6 +15,12 @@ function RadioloskePlace() {
     const select = document.getElementById("radiologi");
     const izbranaVrednost = parseInt(select.value); // Pridobi indeks izbranega stolpca
     const prikaziEuro = izbranaVrednost !== 0; // Dodaj € za vse, razen za prvo možnost
+    const izbranaOpcija = select.options[select.selectedIndex];
+    const izbranoBesedilo = izbranaOpcija.textContent;
+    
+    const loadingText = document.getElementById("loading-text");
+    loadingText.style.display = "block";
+    loadingText.innerText = `Izbrano: ${izbranoBesedilo}`;
 
     // Nastavitve SVG platna
     const svgWidth = 1000;
@@ -107,6 +113,11 @@ function RadioloskePlace() {
             .attr("r", radius)
             .attr("fill", barColors[index])
             .on("mouseover", function () {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("r", radius * 1.05); // Povečaj krog
+
                 tooltip
                     .style("opacity", 1)
                     .style("background-color", barColors[index])
@@ -119,6 +130,11 @@ function RadioloskePlace() {
                     .style("left", `${event.pageX + 20}px`);
             })
             .on("mouseout", function () {
+                d3.select(this)
+                    .transition()
+                    .duration(200)
+                    .attr("r", radius); // Vrni na prvotno velikost
+
                 tooltip.style("opacity", 0);
             });
 
