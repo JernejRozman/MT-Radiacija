@@ -60,13 +60,12 @@ async function ShowSalaries() {
         .call(d3.axisLeft(yScale));
 
     // Funkcija za risanje grafa
-    function Sluzba(job) 
-    {
+    function Sluzba(job) {
         const salaries = salariesData[job];
-            // Izpis besedila "Nalaganje podatkov"
-    const loadingText = document.getElementById("loading-text");
-    loadingText.style.display = "block";
-    loadingText.innerText = job;
+        // Izpis besedila "Nalaganje podatkov"
+        const loadingText = document.getElementById("loading-text");
+        loadingText.style.display = "block";
+        loadingText.innerText = job;
 
         // Risanje črte (line)
         const line = d3.line()
@@ -86,7 +85,42 @@ async function ShowSalaries() {
             .duration(1500)
             .attr("opacity", 1);
 
-        // Dodajanje črtkane linije
+        // Ustvarjanje prelivnega območja (area)
+        const area = d3.area()
+            .x((d, i) => xScale(years[i]))
+            .y0(yScale(0))
+            .y1(d => yScale(d));
+
+        // Dodajanje prelivnega območja pod krivuljo z več barvnimi prehodi
+        svg.append("path")
+            .data([salaries])
+            .attr("class", "area")
+            .attr("d", area)
+            .attr("fill", "url(#multi-color-gradient)") // Nastavi preliv z več barvami
+            .attr("opacity", 0)
+            .transition()
+            .duration(1500)
+            .attr("opacity", 1);
+
+        // Definiramo večbarvni gradient prelivnega območja
+        svg.append("defs")
+            .append("linearGradient")
+            .attr("id", "multi-color-gradient")
+            .attr("x1", "0%") // Začetek na levi strani
+            .attr("x2", "0%") // Ni premikanja v horizontalni smeri
+            .attr("y1", "0%") // Začetek pri vrhu
+            .attr("y2", "100%") // Konča se pri dnu
+            .append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", "#00c6ff") // Svetla modra na vrhu
+            .append("stop")
+            .attr("offset", "50%")
+            .attr("stop-color", "#007bff") // Srednja modra v sredini
+            .append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#1417d4"); // Temna modra na dnu
+
+        // Dodajanje debele črtkane linije
         for (let i = 0; i < salaries.length; i++) {
             svg.append("line")
                 .attr("x1", xScale(years[i]))
@@ -94,7 +128,8 @@ async function ShowSalaries() {
                 .attr("x2", xScale(years[i]))
                 .attr("y2", yScale(0))
                 .attr("stroke", "#1417d4")
-                .attr("stroke-dasharray", "4,4")
+                .attr("stroke-dasharray", "8,4") // Debelejše črtkane črte
+                .attr("stroke-width", 3) // Povečana debelina črte
                 .attr("opacity", 0)
                 .transition()
                 .duration(1500)
@@ -123,7 +158,7 @@ async function ShowSalaries() {
             .append("text")
             .attr("class", "text")
             .attr("x", (d, i) => xScale(years[i]))
-            .attr("y", d => yScale(d) - 15)
+            .attr("y", d => yScale(d) - 10)
             .attr("text-anchor", "middle")
             .attr("font-size", "12px")
             .attr("fill", "#333")
@@ -133,7 +168,7 @@ async function ShowSalaries() {
             .duration(1500)
             .attr("opacity", 1);
 
-        // Interaktivnost: Pokažemo podrobnosti ob prehodu miške
+        // Ustvarimo interaktivni hover efekt za točke
         dots.on("mouseover", function(event, d) {
             const i = d3.select(this).datum();
             d3.select(this)
@@ -149,6 +184,7 @@ async function ShowSalaries() {
                 })
                 .transition()
                 .duration(300)
+                .attr("font-size", "16px") // Povečaj velikost besedila
                 .attr("fill", "#ff5733"); // Spremeni barvo besedila
 
             // Prikazovanje podrobnosti
@@ -166,12 +202,13 @@ async function ShowSalaries() {
                 .transition()
                 .duration(300)
                 .attr("r", 7) // Povratna velikost točke
-                .attr("fill", "#1417d4"); // Povratna barva
+                .attr("fill", "#1417d4"); // Povratna barva točke
 
             // Povratna barva besedila
             svg.selectAll(".text")
                 .transition()
                 .duration(300)
+                .attr("font-size", "12px") // Povratna velikost besedila
                 .attr("fill", "#333"); // Povratna barva besedila
 
             // Odstranimo podrobnosti
