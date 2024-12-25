@@ -65,7 +65,7 @@ async function ShowSalaries() {
         // Izpis besedila "Nalaganje podatkov"
         const loadingText = document.getElementById("loading-text");
         loadingText.style.display = "block";
-        loadingText.innerText = job;
+        loadingText.innerText = `Plače za: ${job}`
 
         // Risanje črte (line)
         const line = d3.line()
@@ -112,7 +112,7 @@ async function ShowSalaries() {
             .attr("y2", "100%") // Konča se pri dnu
             .append("stop")
             .attr("offset", "0%")
-            .attr("stop-color", "#00c6ff") // Svetla modra na vrhu
+            .attr("stop-color", "#89b6ff") // Svetla modra na vrhu
             .append("stop")
             .attr("offset", "50%")
             .attr("stop-color", "#007bff") // Srednja modra v sredini
