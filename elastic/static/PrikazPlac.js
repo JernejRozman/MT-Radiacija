@@ -30,7 +30,7 @@ async function ShowSalaries() {
 
     // Dimenzije SVG-ja
     const margin = { top: 50, right: 20, bottom: 80, left: 60 };
-    const width = 800 - margin.left - margin.right;
+    const width = 900 - margin.left - margin.right;
     const height = 500 - margin.top - margin.bottom;
 
     // Nastavitev SVG-ja
@@ -60,164 +60,153 @@ async function ShowSalaries() {
         .call(d3.axisLeft(yScale));
 
     // Funkcija za risanje grafa
-    function Sluzba(job) {
-        const salaries = salariesData[job];
-        // Izpis besedila "Nalaganje podatkov"
-        const loadingText = document.getElementById("loading-text");
-        loadingText.style.display = "block";
-        loadingText.innerText = `Plače za: ${job}`
+    // Funkcija za risanje grafa z interaktivnimi tooltips
+// Funkcija za risanje grafa z interaktivnimi tooltips
+// Funkcija za risanje grafa z interaktivnimi tooltips
+// Funkcija za risanje grafa z interaktivnimi tooltips
+// Funkcija za risanje grafa z interaktivnimi tooltips
+function Sluzba(job) {
+    const salaries = salariesData[job];
+    const loadingText = document.getElementById("loading-text");
+    loadingText.style.display = "block";
+    loadingText.innerText = `Plače za: ${job}`;
 
-        // Risanje črte (line)
-        const line = d3.line()
-            .x((d, i) => xScale(years[i]))
-            .y(d => yScale(d));
+    // Risanje črte
+    const line = d3.line()
+        .x((d, i) => xScale(years[i]))
+        .y(d => yScale(d));
 
-        // Dodajanje črte s fade-in animacijo
-        svg.append("path")
-            .data([salaries])
-            .attr("class", "line")
-            .attr("d", line)
-            .attr("fill", "none")
-            .attr("stroke", "#007bff")
-            .attr("stroke-width", 6)
+    svg.append("path")
+        .data([salaries])
+        .attr("class", "line")
+        .attr("d", line)
+        .attr("fill", "none")
+        .attr("stroke", "#007bff")  // Enobarvna barva za črto
+        .attr("stroke-width", 6)
+        .attr("opacity", 0)
+        .transition()
+        .duration(1500)
+        .attr("opacity", 1);
+
+    // Ustvarjanje prelivnega območja (area) brez gradienta
+    const area = d3.area()
+        .x((d, i) => xScale(years[i]))
+        .y0(yScale(0))
+        .y1(d => yScale(d));
+
+    svg.append("path")
+        .data([salaries])
+        .attr("class", "area")
+        .attr("d", area)
+        .attr("fill", "#89b6ff") // Enobarvna barva za območje
+        .attr("opacity", 0)
+        .transition()
+        .duration(1500)
+        .attr("opacity", 1);
+
+    // Dodajanje debele črtkane linije
+    for (let i = 0; i < salaries.length; i++) {
+        svg.append("line")
+            .attr("x1", xScale(years[i]))
+            .attr("y1", yScale(salaries[i]))
+            .attr("x2", xScale(years[i]))
+            .attr("y2", yScale(0))
+            .attr("stroke", "#1417d4")  // Enobarvna barva za črtkane linije
+            .attr("stroke-dasharray", "8,4")
+            .attr("stroke-width", 3)
             .attr("opacity", 0)
             .transition()
             .duration(1500)
             .attr("opacity", 1);
+    }
 
-        // Ustvarjanje prelivnega območja (area)
-        const area = d3.area()
-            .x((d, i) => xScale(years[i]))
-            .y0(yScale(0))
-            .y1(d => yScale(d));
+    // Dodajanje točk (dot)
+    const dots = svg.selectAll(".dot")
+        .data(salaries)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("cx", (d, i) => xScale(years[i]))
+        .attr("cy", d => yScale(d))
+        .attr("r", 7)
+        .attr("fill", "#1417d4")  // Enobarvna barva za točke
+        .attr("opacity", 0)
+        .transition()
+        .duration(1500)
+        .attr("opacity", 1);
 
-        // Dodajanje prelivnega območja pod krivuljo z več barvnimi prehodi
-        svg.append("path")
-            .data([salaries])
-            .attr("class", "area")
-            .attr("d", area)
-            .attr("fill", "url(#multi-color-gradient)") // Nastavi preliv z več barvami
-            .attr("opacity", 0)
+    // Dodajanje besedila nad točkami
+    svg.selectAll(".text")
+        .data(salaries)
+        .enter()
+        .append("text")
+        .attr("class", "text")
+        .attr("x", (d, i) => xScale(years[i]))
+        .attr("y", d => yScale(d) - 10)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "12px")
+        .attr("fill", "#333")
+        .text(d => `${d} €`)
+        .attr("opacity", 0)
+        .transition()
+        .duration(1500)
+        .attr("opacity", 1);
+
+    // Interaktivnost za prikaz tooltips z razliko med letoma
+    dots.on("mouseover", function(event, d) {
+        const i = d3.select(this).datum(); // Uporabimo datum() za pridobitev podatka točke
+        const index = salaries.indexOf(d); // Poiščemo indeks trenutne točke
+        const nextSalary = salaries[index + 1] !== undefined ? salaries[index + 1] : null; // Naslednja plača
+        const year = years[index]; // Leto za trenutno točko
+        const salaryDifference = nextSalary !== null ? nextSalary - d : 0;
+
+        // Povečanje točke ob mouseover
+        d3.select(this)
             .transition()
-            .duration(1500)
-            .attr("opacity", 1);
+            .duration(300)
+            .attr("r", 12)
+            .attr("fill", "#ff5733");
 
-        // Definiramo večbarvni gradient prelivnega območja
-        svg.append("defs")
-            .append("linearGradient")
-            .attr("id", "multi-color-gradient")
-            .attr("x1", "0%") // Začetek na levi strani
-            .attr("x2", "0%") // Ni premikanja v horizontalni smeri
-            .attr("y1", "0%") // Začetek pri vrhu
-            .attr("y2", "100%") // Konča se pri dnu
-            .append("stop")
-            .attr("offset", "0%")
-            .attr("stop-color", "#89b6ff") // Svetla modra na vrhu
-            .append("stop")
-            .attr("offset", "50%")
-            .attr("stop-color", "#007bff") // Srednja modra v sredini
-            .append("stop")
-            .attr("offset", "100%")
-            .attr("stop-color", "#1417d4"); // Temna modra na dnu
-
-        // Dodajanje debele črtkane linije
-        for (let i = 0; i < salaries.length; i++) {
-            svg.append("line")
-                .attr("x1", xScale(years[i]))
-                .attr("y1", yScale(salaries[i]))
-                .attr("x2", xScale(years[i]))
-                .attr("y2", yScale(0))
-                .attr("stroke", "#1417d4")
-                .attr("stroke-dasharray", "8,4") // Debelejše črtkane črte
-                .attr("stroke-width", 3) // Povečana debelina črte
-                .attr("opacity", 0)
-                .transition()
-                .duration(1500)
-                .attr("opacity", 1);
-        }
-
-        // Dodajanje točk (dot) s fade-in animacijo
-        const dots = svg.selectAll(".dot")
-            .data(salaries)
-            .enter()
-            .append("circle")
-            .attr("class", "dot")
-            .attr("cx", (d, i) => xScale(years[i]))
-            .attr("cy", d => yScale(d))
-            .attr("r", 7)
-            .attr("fill", "#1417d4")
-            .attr("opacity", 0)
-            .transition()
-            .duration(1500)
-            .attr("opacity", 1);
-
-        // Dodajanje besedila nad točkami
-        svg.selectAll(".text")
-            .data(salaries)
-            .enter()
-            .append("text")
-            .attr("class", "text")
-            .attr("x", (d, i) => xScale(years[i]))
-            .attr("y", d => yScale(d) - 10)
-            .attr("text-anchor", "middle")
+        // Prikaz tooltipa
+        const tooltip = svg.append("text")
+            .attr("id", "tooltip")
+            .attr("x", xScale(years[index]) + 10)
+            .attr("y", yScale(d) - 10)
+            .attr("text-anchor", "start")
             .attr("font-size", "12px")
             .attr("fill", "#333")
-            .text(d => `${d} €`)
-            .attr("opacity", 0)
-            .transition()
-            .duration(1500)
-            .attr("opacity", 1);
+            .text(`Leto: ${year} Plača: ${d} €`);
 
-        // Ustvarimo interaktivni hover efekt za točke
-        dots.on("mouseover", function(event, d) {
-            const i = d3.select(this).datum();
-            d3.select(this)
-                .transition()
-                .duration(300)
-                .attr("r", 12) // Povečaj velikost točke
-                .attr("fill", "#ff5733"); // Spremeni barvo točke
+        // Pokaži razliko in spremeni barvo tooltipa
+        if (nextSalary !== null) {
+            const color = salaryDifference > 0 ? "green" : "red"; // Zelena če je plača višja v naslednjem letu
+            const sign = salaryDifference > 0 ? "+" : "-";
 
-            // Povečanje besedila
-            svg.selectAll(".text")
-                .filter(function(d, i) {
-                    return years[i] === years[years.indexOf(i)];
-                })
-                .transition()
-                .duration(300)
-                .attr("font-size", "16px") // Povečaj velikost besedila
-                .attr("fill", "#ff5733"); // Spremeni barvo besedila
-
-            // Prikazovanje podrobnosti
             svg.append("text")
-                .attr("id", "tooltip")
-                .attr("x", xScale(years[i]) + 10)
-                .attr("y", yScale(d) - 10)
+                .attr("id", "difference")
+                .attr("x", xScale(years[index]) + 10)
+                .attr("y", yScale(d) + 10)
                 .attr("text-anchor", "start")
                 .attr("font-size", "12px")
-                .attr("fill", "#333")
-                .text(`Leto: ${years[i]} Plača: ${d} €`);
-        })
-        .on("mouseout", function(event, d) {
-            d3.select(this)
-                .transition()
-                .duration(300)
-                .attr("r", 7) // Povratna velikost točke
-                .attr("fill", "#1417d4"); // Povratna barva točke
+                .attr("fill", color)
+                .text(`Razlika: ${sign}${Math.abs(salaryDifference)} €`);
+        }
+    })
+    .on("mouseout", function() {
+        // Povratna velikost točke
+        d3.select(this)
+            .transition()
+            .duration(300)
+            .attr("r", 7)
+            .attr("fill", "#1417d4");
 
-            // Povratna barva besedila
-            svg.selectAll(".text")
-                .transition()
-                .duration(300)
-                .attr("font-size", "12px") // Povratna velikost besedila
-                .attr("fill", "#333"); // Povratna barva besedila
+        // Odstranimo tooltip in razliko
+        d3.select("#tooltip").remove();
+        d3.select("#difference").remove();
+    });
 
-            // Odstranimo podrobnosti
-            d3.select("#tooltip").remove();
-        });
-
-        // Skrijemo besedilo "Nalaganje podatkov"
-        loadingText.style.display = "none";
-    }
+    loadingText.style.display = "none";
+}
 
     // Kličemo funkcijo za izris podatkov za izbrani poklic
     Sluzba(selectedJob);
