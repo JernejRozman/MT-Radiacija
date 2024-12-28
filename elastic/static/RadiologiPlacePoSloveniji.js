@@ -30,7 +30,7 @@ function RadioloskePlace() {
         .attr("height", svgHeight);
 
     // Čiščenje obstoječih elementov
-    svg.selectAll("*").remove();
+    d3.select("#visualization").html("");
 
     // Sortiranje podatkov glede na izbrano vrednost
     const sortedData = Object.entries(RadiologiP).sort((a, b) => b[1][izbranaVrednost] - a[1][izbranaVrednost]);
