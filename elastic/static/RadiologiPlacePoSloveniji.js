@@ -1,11 +1,11 @@
 function RadioloskePlace() {
     // Podatki za bolnišnice
     const RadiologiP = {
-        "UKC Maribor": [41, 215545, 5257, 10991],
-        "SB Celje": [6, 45417, 7570, 4145],
-        "SB Novo mesto": [7, 50825, 7261, 7756],
-        "SB Izola": [11, 160000, 6257, 11188],
-        "SB Nova Gorica": [10, 68086, 6809, 12858]
+        "UKC Maribor": [41, 215545, 5257, 18, 3614, 201, 1804],
+        "SB Celje": [6, 45417, 7570, 25, 89195, 3568, 18492],
+        "SB Novo mesto": [7, 50825, 7261, 24, 82218, 3426, 15306],
+        "SB Izola": [11, 160000, 6257, 12, 40026, 3336, 8655],
+        "SB Nova Gorica": [10, 68086, 6809, 10, 57518, 5752, 22345]
     };
 
     // Barve za kroge
@@ -14,7 +14,7 @@ function RadioloskePlace() {
     // Pridobitev izbrane vrednosti iz <select>
     const select = document.getElementById("radiologi");
     const izbranaVrednost = parseInt(select.value); // Pridobi indeks izbranega stolpca
-    const prikaziEuro = izbranaVrednost !== 0; // Dodaj € za vse, razen za prvo možnost
+    const prikaziEuro = izbranaVrednost !== 0 && izbranaVrednost !== 3; // Dodaj € za vse, razen za prvo in tretjo možnost
     const izbranaOpcija = select.options[select.selectedIndex];
     const izbranoBesedilo = izbranaOpcija.textContent;
     
