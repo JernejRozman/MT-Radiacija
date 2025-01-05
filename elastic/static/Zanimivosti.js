@@ -9,7 +9,7 @@ function ZeloZanimivo() {
     ];
  
     const naslovi = [
-        "Postonjska jama",
+        "Postojnska jama",
         "Jedrski reaktor",
         "Rentgen zob",
         "Radiologi",
