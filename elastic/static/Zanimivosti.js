@@ -2,7 +2,7 @@ function ZeloZanimivo() {
     // Zanimivosti o sevanju v Sloveniji
     const zanimivosti = [
         "V Postojnski jami lahko koncentracija radona preseže 10.000 Bq/m³, medtem ko je povprečje na prostem le okoli 10 Bq/m³!",
-        "Jedrski reaktor v NEK letno prepreči izpust približno 1,2 milijona ton CO2, kar je enako, kot bi odstranili 600.000 avtomobilov z naših cest!",
+        "V jedrskih reaktorjih je uporabljena betonska zaščita debela več metrov, da prepreči uhajanje radioaktivnega sevanja v okolje!",
         "Zobozdravniki prejmejo manj sevanja v letu dni, kot nekdo, ki opravi samo en rentgen prsnega koša!",
         "Radiologi imajo v Sloveniji pravico do dodatnega 14-dnevnega dopusta, da zmanjšajo učinke izpostavljenosti sevanju!",
         "Ernest Rutherford je leta 1899 pri raziskavah sevanja radija opazil, da se iz radija sprošča plin, ki ga je kasneje poimenoval radon!"
