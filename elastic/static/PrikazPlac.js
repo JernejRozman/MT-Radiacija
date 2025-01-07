@@ -146,6 +146,7 @@ function Sluzba(job) {
         .attr("text-anchor", "middle")
         .attr("font-size", "12px")
         .attr("fill", "#333")
+        .attr("font-weight", "bold")
         .text(d => `${d} €`)
         .attr("opacity", 0)
         .transition()
