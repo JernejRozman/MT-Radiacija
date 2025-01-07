@@ -4,12 +4,11 @@ function RadioloskePlace() {
         "UKC Maribor": [41, 215545, 5257, 18, 3614, 201, 1804],
         "SB Celje": [6, 45417, 7570, 25, 89195, 3568, 18492],
         "SB Novo mesto": [7, 50825, 7261, 24, 82218, 3426, 15306],
-        "SB Izola": [11, 160000, 6257, 12, 40026, 3336, 8655],
         "SB Nova Gorica": [10, 68086, 6809, 10, 57518, 5752, 22345]
     };
 
     // Barve za kroge
-    const barColors = ["#1E0E64", "#2B1B96", "#482FDF", "#5A68F2", "#8CA5F7", "#A9B9F9"];
+    const barColors = ["#140082", "#1d00bd", "#6d53ff", "#b9adff"];
 
     // Pridobitev izbrane vrednosti iz <select>
     const select = document.getElementById("radiologi");
@@ -35,15 +34,11 @@ function RadioloskePlace() {
     // Sortiranje podatkov glede na izbrano vrednost
     const sortedData = Object.entries(RadiologiP).sort((a, b) => b[1][izbranaVrednost] - a[1][izbranaVrednost]);
 
-    // Nastavitve za kroge
-    const maxRadius = 130; // Največji polmer kroga
-    const minRadius = 40; // Najmanjši polmer kroga
-    const radiusScale = d3.scaleLinear()
-        .domain([0, sortedData.length - 1])
-        .range([maxRadius, minRadius]); // Krogi postopno manjšajo velikost
+    // Nastavitve za kroge (vsi krogi bodo enake velikosti)
+    const radius = 100; // Fiksni polmer za vse kroge
 
     // Izračun skupne širine vseh krogov (da bodo poravnani na sredino)
-    const totalWidth = sortedData.reduce((acc, _, i) => acc + 2 * radiusScale(i), 0);
+    const totalWidth = sortedData.reduce((acc, _) => acc + 2 * radius, 0);
 
     // Začetna X-koordinata za poravnavo na sredino
     let currentX = (svgWidth - totalWidth) / 2;
@@ -64,7 +59,6 @@ function RadioloskePlace() {
         const words = text.split(" ");
         const lineHeight = radius * 0.3; // Razmik med vrsticami
         let line = [];
-        let yOffset = 0;
         let lines = [];
 
         // Razdelitev besedila v vrstice, ki se prilegajo širini kroga
@@ -104,14 +98,17 @@ function RadioloskePlace() {
     sortedData.forEach((item, index) => {
         const [name, values] = item;
         const value = values[izbranaVrednost];
-        const radius = radiusScale(index);
+
+        // Pridobivanje temnejše barve za največji krog
+        const color = barColors[index];
+        const darkenedColor = d3.rgb(color).darker(1.5); // Temnejša barva za največji krog
 
         // Dodajanje kroga
         const circle = svg.append("circle")
             .attr("cx", currentX + radius)
             .attr("cy", svgHeight / 2)
             .attr("r", radius)
-            .attr("fill", barColors[index])
+            .attr("fill", index === 0 ? darkenedColor : color) // Temnejša barva za največji krog
             .on("mouseover", function () {
                 d3.select(this)
                     .transition()
@@ -120,7 +117,7 @@ function RadioloskePlace() {
 
                 tooltip
                     .style("opacity", 1)
-                    .style("background-color", barColors[index])
+                    .style("background-color", color)
                     .style("color", "white")
                     .html(`${name}: ${value}${prikaziEuro ? " €" : ""}`);
             })
@@ -137,6 +134,16 @@ function RadioloskePlace() {
 
                 tooltip.style("opacity", 0);
             });
+
+        // Dodajanje številke nad krogom
+        svg.append("text")
+            .attr("x", currentX + radius)
+            .attr("y", svgHeight / 2 - radius - 20) // Pozicija nad krogom
+            .attr("text-anchor", "middle")
+            .attr("fill", color) // Barva številke je enaka barvi kroga
+            .attr("font-size", "24px") // Povečana velikost številke
+            .attr("font-weight", "bold")
+            .text(index + 1); // Številka, ki označuje vrstni red
 
         // Dodajanje imena bolnice v krog
         const textElement = svg.append("text")
