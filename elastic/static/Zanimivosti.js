@@ -4,8 +4,7 @@ function ZeloZanimivo() {
         "V Postojnski jami lahko koncentracija radona preseže 10.000 Bq/m³, medtem ko je povprečje na prostem le okoli 10 Bq/m³!",
         "V jedrskih reaktorjih je uporabljena betonska zaščita debela več metrov, da prepreči uhajanje radioaktivnega sevanja v okolje!",
         "Zobozdravniki prejmejo manj sevanja v letu dni, kot nekdo, ki opravi samo en rentgen prsnega koša!",
-        "Radiologi imajo v Sloveniji pravico do dodatnega 14-dnevnega dopusta, da zmanjšajo učinke izpostavljenosti sevanju!",
-        "Ernest Rutherford je leta 1899 pri raziskavah sevanja radija opazil, da se iz radija sprošča plin, ki ga je kasneje poimenoval radon!"
+        "Radiologi imajo v Sloveniji pravico do dodatnega 14-dnevnega dopusta, da zmanjšajo učinke izpostavljenosti sevanju!"
     ];
  
     const naslovi = [
@@ -13,11 +12,10 @@ function ZeloZanimivo() {
         "Jedrski reaktor",
         "Rentgen zob",
         "Radiologi",
-        "Radon"
     ];
 
     // Barve za kvadrate
-    const barColors = ["#a99494", "#1aa86c", "#2dd1c0", "#1e46c6", "#9b2020"];
+    const barColors = ["#a99494", "#1aa86c", "#2dd1c0", "#1e46c6"];
 
     // Nastavitve SVG platna
     const svgWidth = 1000;
@@ -34,7 +32,7 @@ function ZeloZanimivo() {
     loadingText.innerText = `Zanimivosti o sevanju v Sloveniji`;
 
     // Nastavitve za kvadrate
-    const size = 145; // Velikost kvadrata
+    const size = 165; // Velikost kvadrata
     const gap = 20; // Razmik med kvadrati
     const cornerRadius = 20; // Začetni polmer okroglega roba
 
