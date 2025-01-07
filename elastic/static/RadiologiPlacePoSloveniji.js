@@ -19,7 +19,7 @@ function RadioloskePlace() {
 
     const loadingText = document.getElementById("loading-text");
     loadingText.style.display = "block";
-    loadingText.innerHTML = `${izbranoBesedilo} <b>(Velikosti krogov in številk so zgolj simbolične!)</b>`;
+    loadingText.innerHTML = `${izbranoBesedilo} <b>(POZOR: Velikosti krogov so zgolj simbolične!)</b>`;
 
     // Nastavitve SVG platna
     const svgWidth = 1000;
@@ -98,6 +98,9 @@ function RadioloskePlace() {
     // Število bolnišnic (krogov)
     const totalHospitals = sortedData.length;
 
+    // Spremljanje, kdaj so vsi krogi zaključeni z animacijo
+    let completedCircles = 0;
+
     // Risanje krogov
     sortedData.forEach((item, index) => {
         const [name, values] = item;
@@ -109,11 +112,11 @@ function RadioloskePlace() {
         // Dodelitev barve na podlagi odtenka
         const color = barColors[index];
 
-        // Dodajanje kroga
+        // Dodajanje kroga z "fade-in" učinkom
         const circle = svg.append("circle")
             .attr("cx", currentX + radius)
             .attr("cy", svgHeight / 2)
-            .attr("r", radius)
+            .attr("r", 0)  // Začnemo z radijem 0, da omogočimo fade-in
             .attr("fill", color)
             .on("mouseover", function () {
                 d3.select(this)
@@ -139,17 +142,17 @@ function RadioloskePlace() {
                     .attr("r", radius); // Vrni na prvotno velikost
 
                 tooltip.style("opacity", 0);
+            })
+            .transition()  // Dodaj prehod za fade-in efekt
+            .duration(300)  // Trajanje fade-in efekta
+            .attr("r", radius) // Postopno povečaj velikost kroga do prave velikosti
+            .on("end", () => {
+                completedCircles++;  // Štejemo zaključen krog
+                if (completedCircles === totalHospitals) {
+                    // Ko so vsi krogi končali animacijo, prikaži besedilo
+                    loadingText.style.opacity = 1;
+                }
             });
-
-        // Dodajanje številke nad krogom z dinamično velikostjo pisave
-        svg.append("text")
-            .attr("x", currentX + radius)
-            .attr("y", svgHeight / 2 - radius - 20) // Pozicija nad krogom
-            .attr("text-anchor", "middle")
-            .attr("fill", color) // Barva številke je enaka barvi kroga
-            .attr("font-size", `${radius * 0.4}`) // Dinamična velikost pisave glede na polmer kroga
-            .attr("font-weight", "bold")
-            .text(index + 1); // Številka, ki označuje vrstni red
 
         // Dodajanje imena bolnice v krog
         const textElement = svg.append("text")
