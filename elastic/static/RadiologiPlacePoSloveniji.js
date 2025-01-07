@@ -19,7 +19,7 @@ function RadioloskePlace() {
 
     const loadingText = document.getElementById("loading-text");
     loadingText.style.display = "block";
-    loadingText.innerText = `Izbrano: ${izbranoBesedilo}`;
+    loadingText.innerHTML = `${izbranoBesedilo} <b>(Velikosti krogov in številk so zgolj simbolične!)</b>`;
 
     // Nastavitve SVG platna
     const svgWidth = 1000;
@@ -34,11 +34,12 @@ function RadioloskePlace() {
     // Sortiranje podatkov glede na izbrano vrednost
     const sortedData = Object.entries(RadiologiP).sort((a, b) => b[1][izbranaVrednost] - a[1][izbranaVrednost]);
 
-    // Nastavitve za kroge (vsi krogi bodo enake velikosti)
-    const radius = 100; // Fiksni polmer za vse kroge
+    // Nastavitve za kroge (velikost kroga se bo spreminjala)
+    const maxRadius = 140; // Največji polmer za prvi krog
+    const minRadius = 60;  // Najmanjši polmer za zadnji krog
 
     // Izračun skupne širine vseh krogov (da bodo poravnani na sredino)
-    const totalWidth = sortedData.reduce((acc, _) => acc + 2 * radius, 0);
+    const totalWidth = sortedData.reduce((acc, _, index) => acc + 2 * (maxRadius - ((maxRadius - minRadius) * (index / (sortedData.length - 1)))), 0);
 
     // Začetna X-koordinata za poravnavo na sredino
     let currentX = (svgWidth - totalWidth) / 2;
@@ -97,14 +98,13 @@ function RadioloskePlace() {
     // Število bolnišnic (krogov)
     const totalHospitals = sortedData.length;
 
-    // Nastavitev začetne in končne velikosti pisave
-    const maxFontSize = 45; // Povečana začetna velikost pisave za prvi krog
-    const minFontSize = 12; // Najmanjša velikost pisave za zadnji krog
-
     // Risanje krogov
     sortedData.forEach((item, index) => {
         const [name, values] = item;
         const value = values[izbranaVrednost];
+
+        // Izračun velikosti kroga (od največjega do najmanjšega)
+        const radius = maxRadius - ((maxRadius - minRadius) * (index / (totalHospitals - 1)));
 
         // Dodelitev barve na podlagi odtenka
         const color = barColors[index];
@@ -147,7 +147,7 @@ function RadioloskePlace() {
             .attr("y", svgHeight / 2 - radius - 20) // Pozicija nad krogom
             .attr("text-anchor", "middle")
             .attr("fill", color) // Barva številke je enaka barvi kroga
-            .attr("font-size", `${maxFontSize - ((maxFontSize - minFontSize) * (index / (totalHospitals - 1)))}`) // Dinamična velikost
+            .attr("font-size", `${radius * 0.4}`) // Dinamična velikost pisave glede na polmer kroga
             .attr("font-weight", "bold")
             .text(index + 1); // Številka, ki označuje vrstni red
 
