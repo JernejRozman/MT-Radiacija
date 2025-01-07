@@ -7,8 +7,8 @@ function RadioloskePlace() {
         "SB Nova Gorica": [10, 68086, 6809, 10, 57518, 5752, 22345]
     };
 
-    // Barve za kroge
-    const barColors = ["#140082", "#1d00bd", "#6d53ff", "#b9adff"];
+    // Barve za kroge - od temnejše modre do svetlejše modre
+    const barColors = ["#003366", "#3366CC", "#6699FF", "#99CCFF"];
 
     // Pridobitev izbrane vrednosti iz <select>
     const select = document.getElementById("radiologi");
@@ -16,7 +16,7 @@ function RadioloskePlace() {
     const prikaziEuro = izbranaVrednost !== 0 && izbranaVrednost !== 3; // Dodaj € za vse, razen za prvo in tretjo možnost
     const izbranaOpcija = select.options[select.selectedIndex];
     const izbranoBesedilo = izbranaOpcija.textContent;
-    
+
     const loadingText = document.getElementById("loading-text");
     loadingText.style.display = "block";
     loadingText.innerText = `Izbrano: ${izbranoBesedilo}`;
@@ -94,21 +94,27 @@ function RadioloskePlace() {
         });
     }
 
+    // Število bolnišnic (krogov)
+    const totalHospitals = sortedData.length;
+
+    // Nastavitev začetne in končne velikosti pisave
+    const maxFontSize = 45; // Povečana začetna velikost pisave za prvi krog
+    const minFontSize = 12; // Najmanjša velikost pisave za zadnji krog
+
     // Risanje krogov
     sortedData.forEach((item, index) => {
         const [name, values] = item;
         const value = values[izbranaVrednost];
 
-        // Pridobivanje temnejše barve za največji krog
+        // Dodelitev barve na podlagi odtenka
         const color = barColors[index];
-        const darkenedColor = d3.rgb(color).darker(1.5); // Temnejša barva za največji krog
 
         // Dodajanje kroga
         const circle = svg.append("circle")
             .attr("cx", currentX + radius)
             .attr("cy", svgHeight / 2)
             .attr("r", radius)
-            .attr("fill", index === 0 ? darkenedColor : color) // Temnejša barva za največji krog
+            .attr("fill", color)
             .on("mouseover", function () {
                 d3.select(this)
                     .transition()
@@ -135,13 +141,13 @@ function RadioloskePlace() {
                 tooltip.style("opacity", 0);
             });
 
-        // Dodajanje številke nad krogom
+        // Dodajanje številke nad krogom z dinamično velikostjo pisave
         svg.append("text")
             .attr("x", currentX + radius)
             .attr("y", svgHeight / 2 - radius - 20) // Pozicija nad krogom
             .attr("text-anchor", "middle")
             .attr("fill", color) // Barva številke je enaka barvi kroga
-            .attr("font-size", "24px") // Povečana velikost številke
+            .attr("font-size", `${maxFontSize - ((maxFontSize - minFontSize) * (index / (totalHospitals - 1)))}`) // Dinamična velikost
             .attr("font-weight", "bold")
             .text(index + 1); // Številka, ki označuje vrstni red
 
