@@ -1,7 +1,7 @@
 async function ReaktorRadiologi() {
     // Zanimivosti o sevanju v Sloveniji
     const zanimivosti = [
-        "Nuklearna fisija je proces v jedrskem reaktorju, pri katerem se težka atomska jedra razdelijo in sprostijo energijo ter ionizirajoče sevanje, kot so nevtroni in gama žarki. POZOR: Fisija povzroča veliko tveganje za raka pljuč in ščitnice ter levkemijo!"
+        "Nuklearna fisija je proces v jedrskem reaktorju, pri katerem se težka atomska jedra razdelijo in sprostijo ionizirajoče sevanje, kot so nevtroni in gama žarki. POZOR: Fisija povzroča veliko tveganje za raka pljuč, ščitnice ter levkemijo!"
     ];
 
     const naslovi = [
@@ -41,7 +41,7 @@ async function ReaktorRadiologi() {
         .style("padding", "5px 10px")
         .style("background-color", "white")
         .style("color", "black")
-        .style("border-radius", "5px")
+        .style("border-radius", "0px")
         .style("pointer-events", "none")
         .style("opacity", 0)
         .style("max-width", "200px")
