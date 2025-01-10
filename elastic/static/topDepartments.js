@@ -38,9 +38,10 @@ function renderBarChart(data) {
     // Clear the existing visualization
     d3.select("#visualization").html("");
 
-    const width = 600;
-    const height = 400;
-    const margin = { top: 20, right: 30, bottom: 100, left: 70 };
+    const container = document.getElementById("visualization");
+    const width = container.clientWidth; // Get the dynamic width
+    const height = 500; // Set the desired height
+    const margin = { top: 20, right: 30, bottom: 90, left: 70 };
 
     // Create scales
     const xScale = d3.scaleBand()
@@ -56,8 +57,10 @@ function renderBarChart(data) {
     // Create SVG
     const svg = d3.select("#visualization")
         .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+        .attr("width", "100%") // Ensure SVG spans the container's width
+        .attr("height", height)
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "xMinYMin meet"); // Ensure aspect ratio is maintained
 
     // Add a tooltip for hover
     const tooltip = d3.select("body").append("div")
