@@ -1,24 +1,30 @@
 async function fetchTopDepartments() {
     const loadingText = document.getElementById("loading-text");
-    const visualization = d3.select("#visualization");
 
     // Display loading message
     loadingText.style.display = "block";
     loadingText.innerText = "Nalaganje podatkov...";
-
-    // Get the value of N from the input field
-    const nInput = document.getElementById("top-n");
-    const n = nInput ? parseInt(nInput.value) || 5 : 5; // Default to 5 if no input
 
     try {
         // Fetch data from the API
         const response = await fetch(`http://localhost:8080/api/top_depts`);
         const data = await response.json();
 
+        // Get the total number of departments
+        const totalDepartments = data.sum_by_depts.length;
+
+        // Set the input field value to the total number of departments (or the current value if it's smaller)
+        const nInput = document.getElementById("top-n");
+        nInput.max = totalDepartments; // Set the maximum possible value to total departments
+        nInput.value = nInput.value > totalDepartments ? totalDepartments : nInput.value; // Ensure the value is within range
+
+        // Get the value of N from the input field (default to the maximum departments if no value)
+        const n = parseInt(nInput.value) || totalDepartments; // Default to the total departments if no input
+
         // Clear the loading message
         loadingText.style.display = "none";
 
-        // Extract top departments
+        // Extract the top departments based on the user's input (n)
         const topDepartments = data.sum_by_depts.slice(0, n).map(dept => ({
             department: dept.key,
             total_radiation: dept.total_radiation.value
@@ -33,6 +39,8 @@ async function fetchTopDepartments() {
         console.error("Napaka pri pridobivanju podatkov:", error);
     }
 }
+
+
 
 function renderBarChart(data) {
     // Clear the existing visualization
@@ -50,8 +58,7 @@ function renderBarChart(data) {
         .padding(0.2);
 
     const yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.total_radiation)])
-        .nice()
+        .domain([0, d3.max(data, d => d.total_radiation)]).nice()
         .range([height - margin.bottom, margin.top]);
 
     // Create SVG
@@ -99,32 +106,30 @@ function renderBarChart(data) {
         .attr("y", d => yScale(d.total_radiation))
         .attr("height", d => height - margin.bottom - yScale(d.total_radiation));
 
-    // Add x-axis with tilted labels
-    svg.append("g")
+    // Add X-axis with tilted labels
+    const nInput = document.getElementById("top-n");
+    const n = parseInt(nInput.value) || 5; // Default to 5 if no value
+
+    // Create the X axis without text labels
+    const xAxis = svg.append("g")
         .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(xScale))
-        .selectAll("text")
-        .attr("transform", "rotate(-45)")
-        .style("text-anchor", "end")
-        .style("font-size", "10px");
+        .call(d3.axisBottom(xScale));
 
-    // Add y-axis
-    svg.append("g")
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(yScale).ticks(5))
-        .selectAll("text")
-        .style("font-size", "12px");
+    // Manually add labels if the number of departments is less than 20
+    if (n < 20) {
+        xAxis.selectAll("text")
+            .style("font-size", function(d) {
+                // Check if the label is longer than 16 characters
+                return d.length > 16 ? "5px" : "10px"; // Reduce font size if label is too long
+            })
+            .attr("transform", "rotate(-45)") // Rotate the X axis labels
+            .style("text-anchor", "end"); // Make the text align to the end
+    } else {
+        // If nInput is greater than or equal to 20, hide labels on the x-axis
+        xAxis.selectAll("text").style("display", "none");
+    }
 
-
-
-    svg.append("text")
-        .attr("x", -height / 2)
-        .attr("y", 15)
-        .attr("text-anchor", "middle")
-        .attr("transform", "rotate(-90)")
-        .text("Celotno sevanje");
-
-    // Add dynamic labels with animation
+    // Add dynamic labels with animation (values over the bars)
     svg.selectAll(".label")
         .data(data)
         .enter()
@@ -139,4 +144,6 @@ function renderBarChart(data) {
         .transition()
         .duration(1000) // Match bar animation
         .attr("y", d => yScale(d.total_radiation) - 5);
+
+
 }
