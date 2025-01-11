@@ -8,9 +8,10 @@ async function radiacijaPodjetjaSkoziCas(companyData, globalMaxRadiation = 0.5) 
     // Sortiraj po datumu
     driving.sort((a, b) => a.date - b.date);
 
-    // Dimenzije za manjši okvir
-    const width = 600;
-    const height = 400;
+    // Dimenzije za dinamičen okvir
+    const container = document.getElementById("visualization"); // Zagotovite, da imate ta element
+    const width = container.clientWidth;
+    const height = 500;
     const marginTop = 20;
     const marginRight = 20;
     const marginBottom = 60;
@@ -29,10 +30,12 @@ async function radiacijaPodjetjaSkoziCas(companyData, globalMaxRadiation = 0.5) 
         .range([height - marginBottom, marginTop]);
 
     // Ustvarimo SVG
-    const svg = d3.create("svg")
-        .attr("width", width)
+    const svg = d3.select("#visualization")
+        .append("svg")
+        .attr("width", "100%") // Raztegnemo čez širino kontejnerja
         .attr("height", height)
-        .attr("style", "max-width: 100%; height: auto;");
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "xMinYMin meet");
 
     // Dodamo tooltip
     const tooltip = d3.select("body").append("div")
@@ -99,8 +102,8 @@ async function radiacijaPodjetjaSkoziCas(companyData, globalMaxRadiation = 0.5) 
         .attr("r", 3)
         .on("mouseover", (event, d) => {
             tooltip.style("visibility", "visible")
-                .html(`<strong>Date:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
-                       <strong>Radiation:</strong> ${d.radiation.toFixed(2)} nSv`);
+                .html(`<strong>Datum:</strong> ${d3.timeFormat("%Y-%m-%d")(d.date)}<br>
+                       <strong>Radiacija:</strong> ${d.radiation.toFixed(2)} mSv`);
         })
         .on("mousemove", event => {
             tooltip.style("top", `${event.pageY + 10}px`)
