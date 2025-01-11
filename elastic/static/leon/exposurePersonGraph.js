@@ -58,14 +58,14 @@ function createScatterPlot(data) {
  
 
     const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-    const width = 600 - margin.left - margin.right; // Širina notranjega grafa
-    const height = 400 - margin.top - margin.bottom; // Višina notranjega grafa
+    const width = 800 - margin.left - margin.right; // Širina notranjega grafa
+    const height = 500 - margin.top - margin.bottom; // Višina notranjega grafa
 
 
     const svg = d3.select("#visualization")
         .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+        .attr("height", "100%")
+        .attr("width", "100%")
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -89,6 +89,8 @@ function createScatterPlot(data) {
         .attr("y", margin.bottom - 10)
         .attr("fill", "black")
         .style("text-anchor", "middle")
+        .style("font-size", "16px")  // Povečaj velikost pisave
+        .style("font-weight", "bold")  // Naredi besedilo odebeljeno
         .text("Osebe");
 
     svg.append("g")
@@ -99,6 +101,8 @@ function createScatterPlot(data) {
         .attr("y", -margin.left + 15)
         .attr("fill", "black")
         .style("text-anchor", "middle")
+        .style("font-size", "16px")  // Povečaj velikost pisave
+        .style("font-weight", "bold")  // Naredi besedilo odebeljeno
         .text("Povprečna izpostavljenost");
 
     // Tooltip za prikaz informacij
@@ -123,7 +127,7 @@ function createScatterPlot(data) {
             // Dodamo simbol (krog, križ ali kvadrat)
             group.append("path")
                 .attr("d", d => {
-                    if (d.total_exposure > 30) {
+                    if (d.total_exposure > 20) {
                         return d3.symbol().type(d3.symbolCross).size(100)();
                     } else if (selectedWorkplaceExposure && d.average_exposure === 0) {
                         return d3.symbol().type(d3.symbolSquare).size(100)();

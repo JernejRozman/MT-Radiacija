@@ -88,13 +88,16 @@ async function fetchCompanyTrends() {
         //await sleep(100000); // Pause for 2 seconds
         // Remove the loading animation and restore the SVG
         //if (!loadingWrapper) {
-        contentContainer.removeChild(loadingWrapper);
-        visualization.style.display = "block";
+
         //}
     } catch (error) {
         document.getElementById("loading-text").innerText = "Napaka pri pridobivanju podatkov";
         console.error("Napaka pri pridobivanju podatkov:", error);
     }
+
+    contentContainer.removeChild(loadingWrapper);
+    visualization.style.display = "block";
+
     window.fetchCompanyTrends = fetchCompanyTrends;
 
 }
@@ -155,14 +158,18 @@ function createConnectedScatterplot(data, selectedCompanies) {
         "#bcbd22", // rumena
     ];
     
+
     const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-    const width = 800 - margin.left - margin.right;
-    const height = 600 - margin.top - margin.bottom;
-    
+    const width = 800 - margin.left - margin.right; // Širina notranjega grafa
+    const height = 500 - margin.top - margin.bottom; // Višina notranjega grafa
+
+
     const svg = d3.select("#visualization")
-        .attr("width", 800)
-        .attr("height", 600)
-        .attr("viewBox", `0 0 ${800} ${600}`);
+        .append("svg")
+        .attr("height", "100%")
+        .attr("width", "100%")
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const x = d3.scaleTime()
         .domain(d3.extent(data, d => d.startDate))
@@ -194,6 +201,8 @@ function createConnectedScatterplot(data, selectedCompanies) {
             .attr("font-weight", "bold")
             .attr("text-anchor", "end")
             .attr("fill", "currentColor")
+            .style("font-size", "16px")  // Povečaj velikost pisave
+            .style("font-weight", "bold")  // Naredi besedilo odebeljeno
             .text("Datum"));
 
     svg.append("g")
@@ -207,6 +216,8 @@ function createConnectedScatterplot(data, selectedCompanies) {
             .attr("x", 4)
             .attr("text-anchor", "start")
             .attr("font-weight", "bold")
+            .style("font-size", "16px")  // Povečaj velikost pisave
+            .style("font-weight", "bold")  // Naredi besedilo odebeljeno
             .text("Vrednost"));
 
     const groupedData = d3.group(data, d => d.company);
