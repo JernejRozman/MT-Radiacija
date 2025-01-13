@@ -40,8 +40,6 @@ async function fetchTopDepartments() {
     }
 }
 
-
-
 function renderBarChart(data) {
     // Clear the existing visualization
     d3.select("#visualization").html("");
@@ -92,7 +90,7 @@ function renderBarChart(data) {
         .attr("fill", () => `#${Math.floor(Math.random() * 16777215).toString(16)}`)
         .on("mouseover", (event, d) => {
             tooltip.style("display", "block")
-                .html(`<strong>${d.department}</strong><br>Total Radiation: ${d.total_radiation.toFixed(2)}`);
+                .html(`<strong>${d.department}</strong><br>Skupna radiacija: ${d.total_radiation.toFixed(2)}`);
         })
         .on("mousemove", event => {
             tooltip.style("top", `${event.pageY - 40}px`)
@@ -106,44 +104,47 @@ function renderBarChart(data) {
         .attr("y", d => yScale(d.total_radiation))
         .attr("height", d => height - margin.bottom - yScale(d.total_radiation));
 
-    // Add X-axis with tilted labels
-    const nInput = document.getElementById("top-n");
-    const n = parseInt(nInput.value) || 5; // Default to 5 if no value
-
-    // Create the X axis without text labels
-    const xAxis = svg.append("g")
-        .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(xScale));
-
-    // Manually add labels if the number of departments is less than 20
-    if (n < 20) {
-        xAxis.selectAll("text")
-            .style("font-size", function(d) {
-                // Check if the label is longer than 16 characters
-                return d.length > 16 ? "5px" : "10px"; // Reduce font size if label is too long
-            })
-            .attr("transform", "rotate(-45)") // Rotate the X axis labels
-            .style("text-anchor", "end"); // Make the text align to the end
-    } else {
-        // If nInput is greater than or equal to 20, hide labels on the x-axis
-        xAxis.selectAll("text").style("display", "none");
-    }
-
-    // Add dynamic labels with animation (values over the bars)
-    svg.selectAll(".label")
-        .data(data)
-        .enter()
-        .append("text")
-        .attr("class", "label")
-        .attr("x", d => xScale(d.department) + xScale.bandwidth() / 2)
-        .attr("y", height - margin.bottom) // Start at bottom
-        .attr("text-anchor", "middle")
-        .attr("fill", "#333")
-        .style("font-size", "10px")
-        .text(d => d.total_radiation.toFixed(2))
-        .transition()
-        .duration(1000) // Match bar animation
-        .attr("y", d => yScale(d.total_radiation) - 5);
-
-
+        // Check the value of nInput
+        const nInput = document.getElementById("top-n");
+        const nValue = parseInt(nInput.value) || 5; // Default to 5 if no value
+    
+        // Add X-axis with tilted labels and adjusted text only if n <= 30
+        if (nValue <= 30) {
+            const xAxis = svg.append("g")
+                .attr("transform", `translate(0,${height - margin.bottom})`)
+                .call(d3.axisBottom(xScale));
+    
+            xAxis.selectAll("text")
+                .style("font-size", "8px") // Reduce font size for all labels
+                .attr("transform", "rotate(-45)") // Rotate the X axis labels
+                .style("text-anchor", "end") // Align text to the end
+                .text(d => {
+                    const words = d.split(" ");
+                    if (words.length > 1) {
+                        // Skrajšaj vse besede razen zadnje na 3 znake in dodaj pike
+                        return words.map((word, index) => {
+                            return index === words.length - 1 // Zadnja beseda ostane nespremenjena
+                                ? word
+                                : word.slice(0, 3) + "."; // Skrajšaj in dodaj piko
+                        }).join(" "); // Združi besede nazaj v niz
+                    }
+                    return d; // Če je ena beseda, jo vrni nespremenjeno
+                });
+        }
+    
+        // Add dynamic labels with animation (values over the bars)
+        svg.selectAll(".label")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class", "label")
+            .attr("x", d => xScale(d.department) + xScale.bandwidth() / 2)
+            .attr("y", height - margin.bottom) // Start at bottom
+            .attr("text-anchor", "middle")
+            .attr("fill", "#333")
+            .style("font-size", "12px")
+            .text(d => d.total_radiation.toFixed(2))
+            .transition()
+            .duration(1000) // Match bar animation
+            .attr("y", d => yScale(d.total_radiation) - 5);
 }
